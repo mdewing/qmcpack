@@ -13,6 +13,8 @@
 
 
 #include "VariableSet.h"
+#include "io/hdf/hdf_archive.h"
+#include "Host/sysutil.h"
 #include <map>
 #include <stdexcept>
 #include <iomanip>
@@ -284,5 +286,51 @@ void VariableSet::print(std::ostream& os, int leftPadSpaces, bool printHeader) c
          << " " << setw(max_index_len) << Index[i] << std::endl;
   }
 }
+
+void VariableSet::saveAsHDF(const std::string& filename) const
+{
+  qmcplusplus::hdf_archive hout;
+  hout.create(filename);
+
+  std::vector<int> vp_file_version{1, 0, 0};
+  hout.write(vp_file_version, "version");
+
+  std::string timestamp(getDateAndTime("%Y-%m-%d %H:%M:%S %Z"));
+  hout.write(timestamp, "timestamp");
+
+  std::vector<qmcplusplus::QMCTraits::ValueType> param_list;
+  for (auto& pair_it : NameAndValue)
+    param_list.push_back(pair_it.second);
+
+  hout.write(param_list, "parameter_values");
+}
+
+
+void VariableSet::readFromHDF(const std::string& filename)
+{
+  qmcplusplus::hdf_archive hin;
+  if (!hin.open(filename, H5F_ACC_RDONLY))
+  {
+    std::ostringstream err_msg;
+    err_msg << "Unable to open VP file: " << filename;
+    throw std::runtime_error(err_msg.str());
+  }
+
+  std::vector<qmcplusplus::QMCTraits::ValueType> param_list;
+  hin.read(param_list, "parameter_values");
+
+  if (param_list.size() != NameAndValue.size())
+  {
+    std::ostringstream err_msg;
+    err_msg << "The number of variational parameters does not match wavefunction.\n";
+    err_msg << "  # of parameters in current wavefunction: " << NameAndValue.size() << "\n";
+    err_msg << "  # of parameters from file              : " << param_list.size() << "\n";
+    throw std::runtime_error(err_msg.str());
+  }
+
+  for (int i = 0; i < param_list.size(); i++)
+    NameAndValue[i].second = param_list[i];
+}
+
 
 } // namespace optimize

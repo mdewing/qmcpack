@@ -357,6 +357,14 @@ struct VariableSet
   void setDefaults(bool optimize_all);
 
   void print(std::ostream& os, int leftPadSpaces = 0, bool printHeader = false) const;
+
+
+  /// Save variational parameters in HDF format
+  void saveAsHDF(const std::string& filename) const;
+
+  /// Read variational parameters from an HDF file.
+  /// This assumes the VPs are already set up.  The wavefunction must match exactly.
+  void readFromHDF(const std::string& filename);
 };
 } // namespace optimize
 
