@@ -28,7 +28,7 @@ for pr in "${pr_list[@]}"; do
     # Only process if the pr wants to be autorebased, else save some cycles
     if [[ "$BODY" == *"!-> Feel free to automatically rebase this PR. <-!"* ]]; then
         AUTO_MERGE=$(echo "$pr" | jq -r .[0].auto_merge)
-        if [[ "$AUTO_MERGE" != "null" ]] && [[ " ${TARGET_BASES[*]} " =~ " ${BASE} " ]]; then
+        if [[ "$AUTO_MERGE" != "stuff" ]] && [[ " ${TARGET_BASES[*]} " =~ " ${BASE} " ]]; then
             source external_codes/github_actions/auto-rebase.sh
             UPDATE_PARAMETERS=$(jq --null-input \
             --arg body "${BODY}"$'\n''> AUTOMATED CHANGE: Rebase to new base head of '"${HEAD}" \
