@@ -354,3 +354,6 @@ Contributions are made under the same UIUC/NCSA open source license that covers 
 
 
 TESTING: testing the auto rebase
+
+
+This is another test of auto rebase
