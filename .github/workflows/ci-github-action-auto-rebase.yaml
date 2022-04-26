@@ -15,7 +15,6 @@ jobs:
   rebase:
     if: |
       contains(github.event.pull_request.body, '!-> Feel free to automatically rebase this PR. <-!')
-      && github.event.pull_request.auto_merge
        
     runs-on: ubuntu-latest
     steps:
