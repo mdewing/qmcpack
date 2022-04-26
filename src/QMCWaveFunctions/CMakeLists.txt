@@ -76,7 +76,6 @@ if(OHMMS_DIM MATCHES 3)
       ${FERMION_SRCS}
       LCAO/LCAOrbitalSet.cpp
       LCAO/LCAOrbitalBuilder.cpp
-      LCAO/SoaSphericalTensor.cpp
       LCAO/MultiQuinticSpline1D.cpp
       LCAO/AOBasisBuilder.cpp
       LCAO/SoaLocalizedBasisSet.cpp)
@@ -118,8 +117,8 @@ if(OHMMS_DIM MATCHES 3)
         BandInfo.cpp
         BsplineFactory/BsplineReaderBase.cpp)
     if(QMC_COMPLEX)
-      set(FERMION_SRCS ${FERMION_SRCS} EinsplineSpinorSetBuilder.cpp
-          BsplineFactory/SplineC2C.cpp BsplineFactory/SplineC2COMPTarget.cpp)
+      set(FERMION_SRCS ${FERMION_SRCS} EinsplineSpinorSetBuilder.cpp BsplineFactory/SplineC2C.cpp
+                       BsplineFactory/SplineC2COMPTarget.cpp)
     else(QMC_COMPLEX)
       set(FERMION_SRCS ${FERMION_SRCS} BsplineFactory/createRealSingle.cpp BsplineFactory/createRealDouble.cpp
                        BsplineFactory/SplineC2R.cpp BsplineFactory/SplineR2R.cpp BsplineFactory/SplineC2ROMPTarget.cpp)

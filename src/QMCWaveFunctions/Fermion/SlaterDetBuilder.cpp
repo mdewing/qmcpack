@@ -538,7 +538,8 @@ std::unique_ptr<MultiSlaterDetTableMethod> SlaterDetBuilder::createMSDFast(
                   << grp << ", problems with ci configuration list. \n");
       }
     }
-    dets[grp]->createDetData(refdet_id, list, C2nodes[grp], C2nodes_sorted[grp]);
+    // reorder unique determinants for a given spin based on the selected reference determinant
+    dets[grp]->createDetData(C2nodes[grp][refdet_id], list, C2nodes[grp], C2nodes_sorted[grp]);
   }
 
   if (csf_data_ptr && csf_data_ptr->coeffs.size() == 1)
@@ -661,7 +662,6 @@ bool SlaterDetBuilder::readDetList(xmlNodePtr cur,
   std::vector<size_t> NEs(nGroups);
   size_t nstates        = 0;
   size_t ndets          = 0;
-  size_t count          = 0;
   size_t cnt0           = 0;
   std::string Dettype   = "DETS";
   std::string CSFChoice = "qchem_coeff";
@@ -772,7 +772,6 @@ bool SlaterDetBuilder::readDetList(xmlNodePtr cur,
         sumsq_qc += qc_ci * qc_ci;
         DetsPerCSF.push_back(0);
         CItags.push_back(tag);
-        count++;
         xmlNodePtr csf = cur->children;
         while (csf != NULL)
         {
