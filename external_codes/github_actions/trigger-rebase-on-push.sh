@@ -1,6 +1,6 @@
 set -e
 
-TARGET_BASES=("develop" "main")
+TARGET_BASES=("develop" "main" "github_actions_automatic_rebase")
 
 if [[ -z "$GITHUB_TOKEN" ]]; then
 	echo "Set the GITHUB_TOKEN env variable."
