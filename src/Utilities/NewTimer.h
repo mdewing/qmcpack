@@ -32,6 +32,10 @@
 #include <nvToolsExt.h>
 #endif
 
+#ifdef USE_ROCTX_API
+#include <roctx.h>
+#endif
+
 #define USE_STACK_TIMERS
 
 namespace qmcplusplus

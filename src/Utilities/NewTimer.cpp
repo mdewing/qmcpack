@@ -49,6 +49,10 @@ void TimerType<CLOCK>::start()
     nvtxRangePushA(name.c_str());
 #endif
 
+#ifdef USE_ROCTX_API
+    roctxRangePush(name.c_str());
+#endif
+
     bool is_true_master(true);
     for (int level = omp_get_level(); level > 0; level--)
       if (omp_get_ancestor_thread_num(level) != 0)
@@ -93,6 +97,10 @@ void TimerType<CLOCK>::stop()
 
 #ifdef USE_NVTX_API
     nvtxRangePop();
+#endif
+
+#ifdef USE_ROCTX_API
+    roctxRangePop();
 #endif
 
     bool is_true_master(true);

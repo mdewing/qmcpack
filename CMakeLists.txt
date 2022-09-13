@@ -198,6 +198,8 @@ cmake_dependent_option(USE_VTUNE_TASKS "USE VTune ittnotify task annotation" OFF
 # CMake note - complex conditionals in cmake_dependent_option must have spaces around parentheses
 cmake_dependent_option(USE_NVTX_API "Enable/disable NVTX regions in CUDA code." OFF
                        "ENABLE_TIMERS AND ( QMC_CUDA OR ENABLE_CUDA )" OFF)
+
+option(USE_ROCTX_API "Enable/disable ROCTXX regions in CUDA code." OFF)
 set(HAVE_EINSPLINE 1) # to be removed
 option(QMC_EXP_THREADING "Experimental non openmp threading models" OFF)
 mark_as_advanced(QMC_EXP_THREADING)
@@ -776,6 +778,11 @@ if(USE_NVTX_API)
 else()
   message(STATUS "CUDA NVTX APIs disabled")
 endif(USE_NVTX_API)
+
+if(USE_ROCTX_API)
+  include_directories("/opt/rocm/include/roctracer/")
+  link_libraries("/opt/rocm/lib/libroctx64.so")
+endif(USE_ROCTX_API)
 
 #-------------------------------------------------------------------
 #  set up ROCM compiler options and libraries

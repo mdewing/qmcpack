@@ -152,5 +152,8 @@
 /* Enable NVTX regions in CUDA code. */
 #cmakedefine USE_NVTX_API @USE_NVTX_API@
 
+/* Enable ROCTX regions in CUDA code. */
+#cmakedefine USE_ROCTX_API @USE_ROCTX_API@
+
 #endif // QMCPLUSPLUS_CONFIGURATION_H
 
