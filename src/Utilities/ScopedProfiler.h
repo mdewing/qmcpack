@@ -9,6 +9,10 @@
 #ifdef USE_VTUNE_API
 #include <ittnotify.h>
 #endif
+#ifdef USE_ROCTX_API
+#include <roctracer_ext.h>
+#endif
+
 
 namespace qmcplusplus
 {
@@ -27,6 +31,9 @@ public:
 #ifdef USE_VTUNE_API
       __itt_resume();
 #endif
+#ifdef USE_ROCTX_API
+      roctracer_start();
+#endif
     }
   }
 
@@ -39,6 +46,9 @@ public:
 #endif
 #ifdef USE_VTUNE_API
       __itt_pause();
+#endif
+#ifdef USE_ROCTX_API
+      roctracer_stop();
 #endif
     }
   }

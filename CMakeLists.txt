@@ -782,6 +782,7 @@ endif(USE_NVTX_API)
 if(USE_ROCTX_API)
   include_directories("/opt/rocm/include/roctracer/")
   link_libraries("/opt/rocm/lib/libroctx64.so")
+  link_libraries("/opt/rocm/lib/libroctracer64.so")
 endif(USE_ROCTX_API)
 
 #-------------------------------------------------------------------
