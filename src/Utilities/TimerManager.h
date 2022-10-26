@@ -62,10 +62,13 @@ private:
   /// name to timer id mapping
   std::map<std::string, timer_id_t> timer_name_to_id;
 
+  std::vector<EventRecord> events;
+
   void initializeTimer(TIMER& t);
 
   void print_flat(Communicate* comm);
   void print_stack(Communicate* comm);
+
 
 public:
 #ifdef USE_VTUNE_TASKS
@@ -77,7 +80,16 @@ public:
 #ifdef USE_VTUNE_TASKS
     task_domain = __itt_domain_create("QMCPACK");
 #endif
+    events.reserve(200000);
   }
+
+  void put_event(double ts, double dur, timer_id_t timer_id, char event_type)
+  {
+    //std::thread::id tid = std::this_thread::get_id();
+    int tid = omp_get_thread_num();
+    events.push_back(EventRecord(ts, dur, timer_id, event_type, tid));
+  }
+  void output_events();
 
   /// Create a new timer object registred in this manager. This call is thread-safe.
   TIMER* createTimer(const std::string& myname, timer_levels mytimer = timer_level_fine);

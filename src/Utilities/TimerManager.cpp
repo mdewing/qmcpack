@@ -26,10 +26,13 @@
 #include "Concurrency/OpenMP.h"
 #include "Message/Communicate.h"
 #include "Message/CommOperators.h"
+#include <chrono>
 
 namespace qmcplusplus
 {
 TimerManager<NewTimer> timer_manager;
+
+auto program_start = std::chrono::system_clock::now();
 
 const std::array<std::string, num_timer_levels> timer_level_names = {"none", "coarse", "medium", "fine"};
 
@@ -411,10 +414,7 @@ void TimerManager<TIMER>::output_timing(Communicate* comm, Libxml2Document& doc,
     doc.addChild(timing_root, "max_timers_exceeded", max_timers_exceeded ? "yes" : "no");
     std::vector<xmlNodePtr> node_stack;
     node_stack.push_back(timing_root);
-    xmlNodePtr current_root = timing_root;
-
-    for (int i = 0; i < p.names.size(); i++)
-    {
+    xmlNodePtr current_root = timing_root; for (int i = 0; i < p.names.size(); i++) {
       std::string stack_name = p.names[i];
       int level              = get_level(stack_name);
       std::string name       = get_leaf_name(stack_name);
@@ -447,6 +447,36 @@ void TimerManager<TIMER>::output_timing(Communicate* comm, Libxml2Document& doc,
   }
 
 #endif
+}
+
+template<class TIMER>
+void TimerManager<TIMER>::output_events()
+{
+  std::ofstream f("qmcpack_events.json");
+  f << "{\n";
+  f << R"("traceEvents": [)" << "\n";
+  int idx = 0;
+  for (auto &er : events) {
+      f << R"({"name":")" << timer_id_name[er.timer_id] << R"(",)" <<
+           R"("ph":")" << er.event_type << R"(",)" <<
+           //R"("cat":")" << er.category << R"(",)" <<
+           //R"("pid":")" << 1 << R"(",)" <<
+           R"("tid":")" << er.tid << R"(",)" <<
+           R"("ts":)" << (uint64_t)(er.timestamp * 1.0e6);
+      if (er.event_type == 'X')
+          f << R"(,"dur":)" << (uint64_t)(er.duration * 1.0e6);
+      f <<  "}";
+      if (idx < events.size()-1) {
+          f << ",\n";
+      } else {
+          f << "\n";
+      }
+      idx++;
+  }
+  f << "],\n";
+  f << R"("beginningOfTime":)" << std::chrono::time_point_cast<std::chrono::microseconds>(program_start).time_since_epoch().count() << "\n";
+  f << "}";
+
 }
 
 template class TimerManager<NewTimer>;

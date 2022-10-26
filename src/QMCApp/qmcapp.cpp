@@ -236,6 +236,7 @@ int main(int argc, char** argv)
       timingDoc.dump(qmc->getTitle() + ".info.xml");
     }
     timer_manager.print(qmcComm);
+    timer_manager.output_events();
 
     qmc.reset();
 

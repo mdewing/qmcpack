@@ -23,6 +23,7 @@
 #include <map>
 #include "config.h"
 #include "Clock.h"
+#include <chrono>
 
 #ifdef USE_VTUNE_TASKS
 #include <ittnotify.h>
@@ -55,9 +56,31 @@ enum timer_levels
 
 extern bool timer_max_level_exceeded;
 
+
+
 // Unsigned char gives 254 timers (0 is reserved).
 // Use a longer type (eg. unsigned short) to increase the limit.
 using timer_id_t = unsigned char;
+
+struct EventRecord
+{
+  //std::chrono::duration<double> timestamp;
+  double timestamp;
+  double duration;
+  timer_id_t timer_id;
+  char event_type;
+  //std::thread::id tid;
+  int tid;
+
+  //EventRecord(std::chrono::duration<double>& ts,
+  EventRecord(double& ts,
+              double& dur,
+              timer_id_t id,
+              char type,
+              //std::thread::id &tid_
+              int &tid_
+              ) : timestamp(ts), duration(dur), timer_id(id), event_type(type), tid(tid_) {}
+};
 
 // Key for tracking time per stack.  Parametered by size.
 template<int N>

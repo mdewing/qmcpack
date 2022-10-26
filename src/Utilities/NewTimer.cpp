@@ -110,6 +110,7 @@ void TimerType<CLOCK>::stop()
     if (is_true_master)
     {
       double elapsed = CLOCK()() - start_time;
+      manager->put_event(start_time, elapsed, timer_id, 'X');
       total_time += elapsed;
       num_calls++;
 
