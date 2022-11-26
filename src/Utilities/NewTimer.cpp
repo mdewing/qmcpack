@@ -49,6 +49,10 @@ void TimerType<CLOCK>::start()
     nvtxRangePushA(name.c_str());
 #endif
 
+    if (enable_events) {
+      event_start_time[timer_id] = CLOCK::now();
+    }
+
     bool is_true_master(true);
     for (int level = omp_get_level(); level > 0; level--)
       if (omp_get_ancestor_thread_num(level) != 0)
@@ -95,6 +99,11 @@ void TimerType<CLOCK>::stop()
     nvtxRangePop();
 #endif
 
+    if (enable_events) {
+      std::chrono::duration<double> elapsed = CLOCK::now() - event_start_time[timer_id];
+      manager->put_event(event_start_time[timer_id], elapsed.count(), timer_id);
+    }
+
     bool is_true_master(true);
     for (int level = omp_get_level(); level > 0; level--)
       if (omp_get_ancestor_thread_num(level) != 0)
@@ -131,5 +140,12 @@ void TimerType<CLOCK>::set_active_by_timer_threshold(const timer_levels threshol
 
 template class TimerType<ChronoClock>;
 template class TimerType<FakeChronoClock>;
+
+//template ChronoClock::time_point class TimerType<ChronoClock>::event_start_time[timer_size];
+//template FakeChronoClock::time_point class TimerType<FakeChronoClock>::event_start_time[timer_size];
+
+//thread_local EventRecord::TimePoint event_start_time[timer_size];
+template <typename CLOCK>
+thread_local typename CLOCK::time_point TimerType<CLOCK>::event_start_time[timer_size];
 
 } // namespace qmcplusplus

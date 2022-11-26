@@ -55,6 +55,29 @@ extern bool timer_max_level_exceeded;
 // Use a longer type (eg. unsigned short) to increase the limit.
 using timer_id_t = unsigned char;
 
+// Structure for tracking timers as events on a timeline
+template <class CLOCK>
+struct EventRecord
+{
+  using TimePoint = typename CLOCK::time_point;
+  TimePoint timestamp;
+  double duration;
+  timer_id_t timer_id;
+  char event_type;
+  int tid;
+
+  EventRecord(TimePoint& ts,
+              double& dur,
+              timer_id_t id,
+              char type,
+              int &tid_
+              ) : timestamp(ts), duration(dur), timer_id(id), event_type(type), tid(tid_) {}
+};
+
+const int timer_size = 255;
+//extern thread_local EventRecord::TimePoint event_start_time[timer_size];
+
+
 // Key for tracking time per stack.  Parametered by size.
 template<int N>
 class StackKeyParam
@@ -149,11 +172,15 @@ protected:
   timer_levels timer_level;
   /// timer id in registered in the manager
   timer_id_t timer_id;
+
+  bool enable_events;
+
   /// timer manager which allocated this timer object. nullptr if USE_STACK_TIMERS is not used.
   TimerManager<TimerType<CLOCK>>* manager;
 #ifdef USE_STACK_TIMERS
   /// stack key of the current measurement
   StackKey current_stack_key;
+
 
   /// total time accumulated per stack key
   std::map<StackKey, double> per_stack_total_time;
@@ -168,6 +195,8 @@ public:
   void start();
   void stop();
 
+  using ClockType = CLOCK;
+  static thread_local typename CLOCK::time_point event_start_time[timer_size];
 #ifdef USE_STACK_TIMERS
   std::map<StackKey, double>& get_per_stack_total_time() { return per_stack_total_time; }
 
@@ -204,6 +233,7 @@ public:
         active(true),
         timer_level(mytimer),
         timer_id(0),
+        enable_events(true),
 #ifdef USE_STACK_TIMERS
         manager(mymanager)
 #else

@@ -29,6 +29,12 @@
 
 namespace qmcplusplus
 {
+
+// Event-related variables
+thread_local int thread_index = -1;
+int max_thread_index = 0;
+auto program_start = std::chrono::system_clock::now();
+
 TimerManager<NewTimer> timer_manager;
 
 const std::array<std::string, num_timer_levels> timer_level_names = {"none", "coarse", "medium", "fine"};
@@ -448,6 +454,80 @@ void TimerManager<TIMER>::output_timing(Communicate* comm, Libxml2Document& doc,
 
 #endif
 }
+
+template<class TIMER>
+void TimerManager<TIMER>::put_event(typename TIMER::ClockType::time_point ts, double dur, timer_id_t timer_id)
+{
+  if (enable_events_) {
+    //int tid = omp_get_thread_num();
+    if (thread_index == -1) {
+      std::lock_guard lock(event_lock_);
+      thread_index = max_thread_index++;
+      all_events_.push_back(new EventVector());
+    }
+
+    //all_events_[thread_index]->push_back(EventRecord<typename TIMER::ClockType>(ts, dur, timer_id, 'X', tid));
+    all_events_[thread_index]->push_back(EventRecord<typename TIMER::ClockType>(ts, dur, timer_id, 'X', thread_index));
+  }
+}
+
+template<class T>
+double get_time_from_program_start(T t);
+
+template <>
+double get_time_from_program_start(ChronoClock::time_point t) {
+  std::chrono::duration<double> elapsed = t - program_start;
+  return elapsed.count();
+}
+
+template <>
+double get_time_from_program_start(FakeChronoClock::time_point t) {
+  return 1.0;
+}
+
+
+template<class TIMER>
+void TimerManager<TIMER>::output_events()
+{
+  if (!enable_events_)
+    return;
+
+  std::string event_fname("qmcpack_events.json");
+  std::ofstream f(event_fname);
+  f << "{\n";
+  f << R"("traceEvents": [)" << "\n";
+  int all_idx = 0;
+  for (auto events : all_events_) {
+    int idx = 0;
+    for (auto &er : *events) {
+        //std::chrono::duration<double> elapsed = er.timestamp - get_program_start<typename TIMER::ClockType>();
+        double elapsed = get_time_from_program_start(er.timestamp);
+        f << R"({"name":")" << timer_id_name[er.timer_id] << R"(",)" <<
+             R"("ph":")" << er.event_type << R"(",)" <<
+             //R"("cat":")" << er.category << R"(",)" <<
+             R"("pid":")" << 1 << R"(",)" <<
+             R"("tid":")" << er.tid << R"(",)" <<
+             R"("ts":)" << std::setprecision(12) << (elapsed * 1.0e6);
+        if (er.event_type == 'X')
+            f << R"(,"dur":)" << std::setprecision(12) << (er.duration * 1.0e6);
+        f <<  "}";
+        if (idx == events->size()-1 && all_idx == all_events_.size()-1) {
+            f << "\n";
+        } else {
+            f << ",\n";
+        }
+        idx++;
+    }
+    all_idx++;
+  }
+  f << "],\n";
+  f << R"("beginningOfTime":)" << std::chrono::time_point_cast<std::chrono::microseconds>(program_start).time_since_epoch().count() << "\n";
+  f << "}";
+
+}
+
+
+
 
 template class TimerManager<NewTimer>;
 template class TimerManager<FakeTimer>;

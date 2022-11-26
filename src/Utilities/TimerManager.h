@@ -62,6 +62,12 @@ private:
   /// name to timer id mapping
   std::map<std::string, timer_id_t> timer_name_to_id;
 
+  using EventVector = std::vector<EventRecord<typename TIMER::ClockType>>;
+  std::vector<EventVector *> all_events_;
+  bool enable_events_;
+  std::mutex event_lock_;
+
+
   void initializeTimer(TIMER& t);
 
   void print_flat(Communicate* comm);
@@ -72,12 +78,16 @@ public:
   __itt_domain* task_domain;
 #endif
 
-  TimerManager() : timer_threshold(timer_level_coarse), max_timer_id(1), max_timers_exceeded(false)
+  TimerManager() : timer_threshold(timer_level_coarse), max_timer_id(1), max_timers_exceeded(false), enable_events_(true)
   {
 #ifdef USE_VTUNE_TASKS
     task_domain = __itt_domain_create("QMCPACK");
 #endif
   }
+
+  void put_event(typename TIMER::ClockType::time_point ts, double dur, timer_id_t timer_id);
+
+  void output_events();
 
   /// Create a new timer object registred in this manager. This call is thread-safe.
   TIMER* createTimer(const std::string& myname, timer_levels mytimer = timer_level_fine);

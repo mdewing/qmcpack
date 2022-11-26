@@ -234,6 +234,7 @@ int main(int argc, char** argv)
     if (OHMMS::Controller->rank() == 0)
     {
       timingDoc.dump(qmc->getTitle() + ".info.xml");
+      timer_manager.output_events();
     }
     timer_manager.print(qmcComm);
 
