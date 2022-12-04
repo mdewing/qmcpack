@@ -66,6 +66,7 @@ private:
   std::vector<EventVector *> all_events_;
   bool enable_events_;
   std::mutex event_lock_;
+  std::vector<uint64_t> thread_id_map_;
 
 
   void initializeTimer(TIMER& t);

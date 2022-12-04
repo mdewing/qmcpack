@@ -27,6 +27,12 @@
 #include "Message/Communicate.h"
 #include "Message/CommOperators.h"
 
+// For syscall to get tid
+#ifdef __linux__
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif
+
 namespace qmcplusplus
 {
 
@@ -464,6 +470,14 @@ void TimerManager<TIMER>::put_event(typename TIMER::ClockType::time_point ts, do
       std::lock_guard lock(event_lock_);
       thread_index = max_thread_index++;
       all_events_.push_back(new EventVector());
+#ifdef __linux__
+      // Following the get_threadid function in llvm/lib/Support/Unix/Threading.inc
+      // So the reported thread id's will match those from OpenMP profiling
+      uint64_t sys_tid = syscall(SYS_gettid);
+      thread_id_map_.push_back(sys_tid);
+#else
+      thread_id_map_.push_back(thread_index);
+#endif
     }
 
     //all_events_[thread_index]->push_back(EventRecord<typename TIMER::ClockType>(ts, dur, timer_id, 'X', tid));
@@ -506,7 +520,7 @@ void TimerManager<TIMER>::output_events()
              R"("ph":")" << er.event_type << R"(",)" <<
              //R"("cat":")" << er.category << R"(",)" <<
              R"("pid":")" << 1 << R"(",)" <<
-             R"("tid":")" << er.tid << R"(",)" <<
+             R"("tid":")" << thread_id_map_[er.tid] << R"(",)" <<
              R"("ts":)" << std::setprecision(12) << (elapsed * 1.0e6);
         if (er.event_type == 'X')
             f << R"(,"dur":)" << std::setprecision(12) << (er.duration * 1.0e6);
