@@ -23,6 +23,10 @@
 
 namespace qmcplusplus
 {
+
+template <typename CLOCK>
+thread_local typename CLOCK::time_point TimerType<CLOCK>::event_start_time[timer_size];
+
 bool timer_max_level_exceeded = false;
 
 #ifndef ENABLE_TIMERS
@@ -141,11 +145,5 @@ void TimerType<CLOCK>::set_active_by_timer_threshold(const timer_levels threshol
 template class TimerType<ChronoClock>;
 template class TimerType<FakeChronoClock>;
 
-//template ChronoClock::time_point class TimerType<ChronoClock>::event_start_time[timer_size];
-//template FakeChronoClock::time_point class TimerType<FakeChronoClock>::event_start_time[timer_size];
-
-//thread_local EventRecord::TimePoint event_start_time[timer_size];
-template <typename CLOCK>
-thread_local typename CLOCK::time_point TimerType<CLOCK>::event_start_time[timer_size];
 
 } // namespace qmcplusplus
