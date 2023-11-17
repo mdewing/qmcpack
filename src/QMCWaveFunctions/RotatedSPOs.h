@@ -440,6 +440,10 @@ private:
   /// timer for apply_rotation
   NewTimer& apply_rotation_timer_;
 
+  NewTimer& table_method_timer_;
+  NewTimer& table_methodWF_timer_;
+  NewTimer& table_method_invert_timer_;
+
   /// List of previously applied parameters
   std::vector<std::vector<RealType>> history_params_;
 

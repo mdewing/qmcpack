@@ -25,7 +25,10 @@ RotatedSPOs::RotatedSPOs(const std::string& my_name, std::unique_ptr<SPOSet>&& s
       Phi(std::move(spos)),
       nel_major_(0),
       params_supplied(false),
-      apply_rotation_timer_(createGlobalTimer("RotatedSPOs::apply_rotation", timer_level_fine))
+      apply_rotation_timer_(createGlobalTimer("RotatedSPOs::apply_rotation", timer_level_fine)),
+      table_method_timer_(createGlobalTimer("RotatedSPOs::table_method_eval", timer_level_fine)),
+      table_methodWF_timer_(createGlobalTimer("RotatedSPOs::table_method_evalWF", timer_level_fine)),
+      table_method_invert_timer_(createGlobalTimer("RotatedSPOs::invert_in_table_method", timer_level_fine))
 {
   OrbitalSetSize = Phi->getOrbitalSetSize();
 }
@@ -1129,6 +1132,7 @@ $
 $
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 {
+  ScopedTimer table_timer(table_method_timer_);
   ValueMatrix Table;
   ValueMatrix Bbar;
   ValueMatrix Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y11, Y23, Y24, Y25, Y26;
@@ -1286,7 +1290,28 @@ $
       WS.resize(k);
       Piv.resize(k);
       std::complex<RealType> logdet = 0.0;
-      InvertWithLog(Y6.data(), k, k, WS.data(), Piv.data(), logdet);
+      if (k == 1)
+      {
+        Y6(0, 0) = 1.0 / Y6(0, 0);
+      }
+      else if (k == 2)
+      {
+        ValueType a   = Y6(0, 0);
+        ValueType b   = Y6(0, 1);
+        ValueType c   = Y6(1, 0);
+        ValueType d   = Y6(1, 1);
+        ValueType det = a * b - c * d;
+        Y6(0, 0)      = d / det;
+        Y6(0, 1)      = -b / det;
+        Y6(1, 0)      = -c / det;
+        Y6(1, 1)      = a / det;
+      }
+      else
+      {
+        table_method_invert_timer_.start();
+        InvertWithLog(Y6.data(), k, k, WS.data(), Piv.data(), logdet);
+        table_method_invert_timer_.stop();
+      }
 
       Y11.resize(nel, k);
       Y23.resize(k, k);
@@ -1438,6 +1463,7 @@ void RotatedSPOs::table_method_evalWF(Vector<ValueType>& dlogpsi,
                                       const std::vector<int>& detData_up,
                                       const std::vector<std::vector<int>>& lookup_tbl)
 {
+  ScopedTimer table_timer(table_methodWF_timer_);
   ValueMatrix Table;
   ValueMatrix Y5, Y6, Y7;
   ValueMatrix pK4, K4T, TK4T;
@@ -1535,7 +1561,28 @@ void RotatedSPOs::table_method_evalWF(Vector<ValueType>& dlogpsi,
       WS.resize(k);
       Piv.resize(k);
       std::complex<RealType> logdet = 0.0;
-      InvertWithLog(Y6.data(), k, k, WS.data(), Piv.data(), logdet);
+      if (k == 1)
+      {
+        Y6(0, 0) = 1.0 / Y6(0, 0);
+      }
+      else if (k == 2)
+      {
+        ValueType a   = Y6(0, 0);
+        ValueType b   = Y6(0, 1);
+        ValueType c   = Y6(1, 0);
+        ValueType d   = Y6(1, 1);
+        ValueType det = a * b - c * d;
+        Y6(0, 0)      = d / det;
+        Y6(0, 1)      = -b / det;
+        Y6(1, 0)      = -c / det;
+        Y6(1, 1)      = a / det;
+      }
+      else
+      {
+        table_method_invert_timer_.start();
+        InvertWithLog(Y6.data(), k, k, WS.data(), Piv.data(), logdet);
+        table_method_invert_timer_.stop();
+      }
 
       Y7.resize(k, nel);
 
