@@ -728,7 +728,7 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
 
     for (int pm = 0; pm < numParams; pm++)
     {
-      Return_t wfe   = (Dsaved(iw, pm) + (Dsaved(iw, pm) - D_avg[pm]) * eloc_new) * weight;
+      Return_t wfe   = (HDsaved(iw, pm) + (Dsaved(iw, pm) - D_avg[pm]) * eloc_new) * weight;
       Return_t wfd   = (Dsaved(iw, pm) - D_avg[pm]) * weight;
       Return_t vterm = HDsaved(iw, pm) * (eloc_new - curAvg_w) +
           (Dsaved(iw, pm) - D_avg[pm]) * eloc_new * (eloc_new - RealType(2.0) * curAvg_w);
