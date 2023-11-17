@@ -705,7 +705,6 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
   for (int iw = 0; iw < rank_local_num_samples_; iw++)
   {
     Return_rt weight       = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
-    const Return_t* Dsaved = DerivRecords_[iw];
     for (int pm = 0; pm < numParams; pm++)
     {
       D_avg[pm] += DerivRecords_(iw, pm) * weight;
