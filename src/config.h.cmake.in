@@ -35,7 +35,7 @@
 /* Enable OpenMP offload. */
 #cmakedefine ENABLE_OFFLOAD @ENABLE_OFFLOAD@
 
-#ifdef ENABLE_OFFLOAD
+#ifdef ENABLE_OFFLOAD_REGULAR
   #define PRAGMA_OFFLOAD(x) _Pragma(x)
 #else
   #define PRAGMA_OFFLOAD(x)
