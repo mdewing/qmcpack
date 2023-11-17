@@ -66,7 +66,7 @@ public:
   Return_rt fillOverlapHamiltonianMatricesOriginal(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right);
   Return_rt fillOverlapHamiltonianMatricesMinimal(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right);
   Return_rt fillOverlapHamiltonianMatricesTranspose(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right);
-  Return_rt fillOverlapHamiltonianMatricesOffload(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right) {return 0;};
+  Return_rt fillOverlapHamiltonianMatricesOffload(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right);
 protected:
   /// H components used in correlated sampling. It can be KE or KE+NLPP
   std::vector<std::string> H_KE_node_names_;
