@@ -696,19 +696,14 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
   Left                = 0.0;
   const int numParams = getNumParams();
 
-  //     resetPsi();
   curAvg_w            = SumValue[SUM_E_WGT] / SumValue[SUM_WGT];
   Return_rt curAvg2_w = SumValue[SUM_ESQ_WGT] / SumValue[SUM_WGT];
-  //    RealType H2_avg = 1.0/curAvg2_w;
-  RealType H2_avg = 1.0 / (curAvg_w * curAvg_w);
-  //    RealType H2_avg = 1.0/std::sqrt(curAvg_w*curAvg_w*curAvg2_w);
   RealType V_avg = curAvg2_w - curAvg_w * curAvg_w;
   std::vector<Return_t> D_avg(numParams, 0.0);
   Return_rt wgtinv = 1.0 / SumValue[SUM_WGT];
 
   for (int iw = 0; iw < rank_local_num_samples_; iw++)
   {
-    //const Return_rt* restrict saved = RecordsOnNode_[iw];
     Return_rt weight       = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
     const Return_t* Dsaved = DerivRecords_[iw];
     for (int pm = 0; pm < numParams; pm++)
