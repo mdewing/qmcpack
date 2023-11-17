@@ -689,17 +689,8 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
 {
   ScopedTimer tmp_timer(fill_timer_);
 
-  RealType b1, b2;
-  if (GEVType == "H2")
-  {
-    b1 = w_beta;
-    b2 = 0;
-  }
-  else
-  {
-    b2 = w_beta;
-    b1 = 0;
-  }
+  RealType b2;
+  b2 = w_beta;
 
   Right               = 0.0;
   Left                = 0.0;
@@ -742,9 +733,6 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
       Return_t wfd   = (Dsaved[pm] - D_avg[pm]) * weight;
       Return_t vterm = HDsaved[pm] * (eloc_new - curAvg_w) +
           (Dsaved[pm] - D_avg[pm]) * eloc_new * (eloc_new - RealType(2.0) * curAvg_w);
-      //                 H2
-      Right(0, pm + 1) += b1 * H2_avg * std::real(vterm) * weight;
-      Right(pm + 1, 0) += b1 * H2_avg * std::real(vterm) * weight;
       //                 Variance
       Left(0, pm + 1) += b2 * std::real(vterm) * weight;
       Left(pm + 1, 0) += b2 * std::real(vterm) * weight;
@@ -764,17 +752,13 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
             std::real((HDsaved[pm] - RealType(2.0) * std::conj(Dsaved[pm] - D_avg[pm]) * eloc_new) *
                       (HDsaved[pm2] - RealType(2.0) * (Dsaved[pm2] - D_avg[pm2]) * eloc_new));
         Left(pm + 1, pm2 + 1) += b2 * (varij + V_avg * ovlij);
-        //                H2
-        Right(pm + 1, pm2 + 1) += b1 * H2_avg * varij;
       }
     }
   }
   myComm->allreduce(Right);
   myComm->allreduce(Left);
   Left(0, 0)  = (1 - b2) * curAvg_w + b2 * V_avg;
-  Right(0, 0) = 1.0 + b1 * H2_avg * V_avg;
-  if (GEVType == "H2")
-    return H2_avg;
+  Right(0, 0) = 1.0;
 
   return 1.0;
 }
