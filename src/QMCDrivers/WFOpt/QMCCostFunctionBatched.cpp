@@ -683,6 +683,88 @@ QMCCostFunctionBatched::EffectiveWeight QMCCostFunctionBatched::correlatedSampli
   return SumValue[SUM_WGT] * SumValue[SUM_WGT] / (SumValue[SUM_WGTSQ] * samples_.getGlobalNumSamples());
 }
 
+// Move loop over samples inward
+QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonianMatricesTranspose(
+    Matrix<Return_rt>& Left,
+    Matrix<Return_rt>& Right)
+{
+  ScopedTimer tmp_timer(fill_timer_);
+
+  RealType b2;
+  b2 = w_beta;
+
+  Right               = 0.0;
+  Left                = 0.0;
+  const int numParams = getNumParams();
+
+  curAvg_w            = SumValue[SUM_E_WGT] / SumValue[SUM_WGT];
+  Return_rt curAvg2_w = SumValue[SUM_ESQ_WGT] / SumValue[SUM_WGT];
+  RealType V_avg      = curAvg2_w - curAvg_w * curAvg_w;
+  std::vector<Return_t> D_avg(numParams, 0.0);
+  Return_rt wgtinv = 1.0 / SumValue[SUM_WGT];
+
+  for (int iw = 0; iw < rank_local_num_samples_; iw++)
+  {
+    Return_rt weight = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
+    for (int pm = 0; pm < numParams; pm++)
+    {
+      D_avg[pm] += DerivRecords_(iw, pm) * weight;
+    }
+  }
+
+  myComm->allreduce(D_avg);
+
+  const Matrix<Return_t>& Dsaved  = DerivRecords_;
+  const Matrix<Return_t>& HDsaved = HDerivRecords_;
+
+  std::vector<Return_t> wfd_v(rank_local_num_samples_);
+
+  for (int pm = 0; pm < numParams; pm++)
+  {
+    for (int iw = 0; iw < rank_local_num_samples_; iw++)
+    {
+      Return_rt weight   = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
+      Return_rt eloc_new = RecordsOnNode_(iw, ENERGY_NEW);
+      Return_t wfe       = (HDsaved(iw, pm) + (Dsaved(iw, pm) - D_avg[pm]) * eloc_new) * weight;
+      Return_t wfd       = (Dsaved(iw, pm) - D_avg[pm]) * weight;
+      wfd_v[iw]          = wfd;
+      Return_t vterm     = HDsaved(iw, pm) * (eloc_new - curAvg_w) +
+          (Dsaved(iw, pm) - D_avg[pm]) * eloc_new * (eloc_new - RealType(2.0) * curAvg_w);
+      //                 Variance
+      Left(0, pm + 1) += b2 * std::real(vterm) * weight;
+      Left(pm + 1, 0) += b2 * std::real(vterm) * weight;
+      //                 Hamiltonian
+      Left(0, pm + 1) += (1 - b2) * std::real(wfe);
+      Left(pm + 1, 0) += (1 - b2) * std::real(wfd) * eloc_new;
+    }
+    for (int pm2 = 0; pm2 < numParams; pm2++)
+    {
+      for (int iw = 0; iw < rank_local_num_samples_; iw++)
+      {
+        Return_rt weight   = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
+        Return_rt eloc_new = RecordsOnNode_(iw, ENERGY_NEW);
+        //                Hamiltonian
+        Left(pm + 1, pm2 + 1) +=
+            std::real((1 - b2) * std::conj(wfd_v[iw]) * (HDsaved(iw, pm2) + (Dsaved(iw, pm2) - D_avg[pm2]) * eloc_new));
+        //                Overlap
+        RealType ovlij = std::real(std::conj(wfd_v[iw]) * (Dsaved(iw, pm2) - D_avg[pm2]));
+        Right(pm + 1, pm2 + 1) += ovlij;
+        //                Variance
+        RealType varij = weight *
+            std::real((HDsaved(iw, pm) - RealType(2.0) * std::conj(Dsaved(iw, pm) - D_avg[pm]) * eloc_new) *
+                      (HDsaved(iw, pm2) - RealType(2.0) * (Dsaved(iw, pm2) - D_avg[pm2]) * eloc_new));
+        Left(pm + 1, pm2 + 1) += b2 * (varij + V_avg * ovlij);
+      }
+    }
+  }
+  myComm->allreduce(Right);
+  myComm->allreduce(Left);
+  Left(0, 0)  = (1 - b2) * curAvg_w + b2 * V_avg;
+  Right(0, 0) = 1.0;
+
+  return 1.0;
+}
+
 QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonianMatricesMinimal(
     Matrix<Return_rt>& Left,
     Matrix<Return_rt>& Right)
@@ -698,13 +780,13 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
 
   curAvg_w            = SumValue[SUM_E_WGT] / SumValue[SUM_WGT];
   Return_rt curAvg2_w = SumValue[SUM_ESQ_WGT] / SumValue[SUM_WGT];
-  RealType V_avg = curAvg2_w - curAvg_w * curAvg_w;
+  RealType V_avg      = curAvg2_w - curAvg_w * curAvg_w;
   std::vector<Return_t> D_avg(numParams, 0.0);
   Return_rt wgtinv = 1.0 / SumValue[SUM_WGT];
 
   for (int iw = 0; iw < rank_local_num_samples_; iw++)
   {
-    Return_rt weight       = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
+    Return_rt weight = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
     for (int pm = 0; pm < numParams; pm++)
     {
       D_avg[pm] += DerivRecords_(iw, pm) * weight;
@@ -770,7 +852,8 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
                                                                                          Matrix<Return_rt>& Right)
 {
   //return fillOverlapHamiltonianMatricesOriginal(Left, Right);
-  return fillOverlapHamiltonianMatricesMinimal(Left, Right);
+  //return fillOverlapHamiltonianMatricesMinimal(Left, Right);
+  return fillOverlapHamiltonianMatricesTranspose(Left, Right);
 }
 
 QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonianMatricesOriginal(
