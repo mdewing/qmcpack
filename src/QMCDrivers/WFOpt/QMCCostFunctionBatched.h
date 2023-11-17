@@ -63,6 +63,10 @@ public:
   void GradCost(std::vector<Return_rt>& PGradient, const std::vector<Return_rt>& PM, Return_rt FiniteDiff = 0) override;
   Return_rt fillOverlapHamiltonianMatrices(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right) override;
 
+  Return_rt fillOverlapHamiltonianMatricesOriginal(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right);
+  Return_rt fillOverlapHamiltonianMatricesMinimal(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right) {return 0;};
+  Return_rt fillOverlapHamiltonianMatricesTranspose(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right) {return 0;};
+  Return_rt fillOverlapHamiltonianMatricesOffload(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right) {return 0;};
 protected:
   /// H components used in correlated sampling. It can be KE or KE+NLPP
   std::vector<std::string> H_KE_node_names_;
