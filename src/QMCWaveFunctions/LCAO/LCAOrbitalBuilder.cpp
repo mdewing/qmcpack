@@ -658,11 +658,13 @@ bool LCAOrbitalBuilder::putFromXML(LCAOrbitalSet& spo, xmlNodePtr coeff_ptr)
   aAttrib.add(norbs, "size");
   aAttrib.add(norbs, "orbitals", {}, TagStatus::DELETED);
   aAttrib.put(coeff_ptr);
+#if 0
   if (norbs < spo.getOrbitalSetSize())
   {
     return false;
     APP_ABORT("LCAOrbitalBuilder::putFromXML missing or incorrect size");
   }
+#endif
   if (norbs)
   {
     std::vector<ValueType> Ctemp;
