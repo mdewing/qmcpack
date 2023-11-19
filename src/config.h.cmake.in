@@ -146,5 +146,8 @@
 /* Enable NVTX regions in CUDA code. */
 #cmakedefine USE_NVTX_API @USE_NVTX_API@
 
+/* Use MAGMA to solve eigenvalue problem in optimizer */
+#cmakedefine QMC_USE_MAGMA @QMC_USE_MAGMA@
+
 #endif // QMCPLUSPLUS_CONFIGURATION_H
 

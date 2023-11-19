@@ -1644,30 +1644,29 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
       invMat(i, i) = bestShift_i * bestShift_s;
   }
 
-  // compute the inverse of the overlap matrix
-  {
-    ScopedTimer local(involvmat_timer_);
-    invert_matrix(invMat, false);
-  }
-
   // apply the overlap shift
   for (int i = 1; i < N; i++)
     for (int j = 1; j < N; j++)
       hamMat(i, j) += bestShift_s * ovlMat(i, j);
 
-  // multiply the shifted hamiltonian matrix by the inverse of the overlap matrix
-  qmcplusplus::MatrixOperators::product(invMat, hamMat, prdMat);
-
-  // transpose the result (why?)
-  for (int i = 0; i < N; i++)
-    for (int j = i + 1; j < N; j++)
-      std::swap(prdMat(i, j), prdMat(j, i));
-
   // compute the lowest eigenvalue of the product matrix and the corresponding eigenvector
   RealType lowestEV = 0.;
   {
     ScopedTimer local(eigenvalue_timer_);
-    lowestEV = getLowestEigenvector(prdMat, parameterDirections);
+    if (false)
+    {
+      app_log() << "Using CPU version to solve Eigenvalue problem" << std::endl;
+      lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections);
+    }
+    else
+    {
+#ifdef QMC_USE_MAGMA
+      app_log() << "Using Magma GPU version to solve Eigenvalue problem" << std::endl;
+      lowestEV = getLowestEigenvectorMagma(hamMat, invMat, parameterDirections);
+#else
+      throw std::runtime_error("No compiled with MAGMA!\n");
+#endif
+    }
   }
 
   // compute the scaling constant to apply to the update

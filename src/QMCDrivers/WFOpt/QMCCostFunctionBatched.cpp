@@ -735,6 +735,11 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
   Return_rt* HDsaved_ptr = HDsaved.data();
   Return_rt* Records_ptr = RecordsOnNode_.data();
 
+  const uint64_t data_bytes = data_size * sizeof(Return_t);
+  const uint64_t out_bytes = out_size * sizeof(Return_t);
+  app_log() << "Data matrices size, each = " << data_bytes/1000 << " K" <<  " total = " << 2*data_bytes/1e6 << " M" << std::endl;
+  app_log() << "Output matrices size, each = " << out_bytes/1000 << " K" <<  " total = " << 2*out_bytes/1e6 << " M" << std::endl;
+
 
 #pragma omp target data map(tofrom : Left_ptr[ : out_size], Right_ptr[ : out_size])         \
     map(to : Records_ptr[ : rank_local_num_samples_ * SUM_INDEX_SIZE], D_avg[ : numParams]) \

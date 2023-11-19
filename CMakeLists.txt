@@ -633,6 +633,16 @@ target_compile_definitions(Math::FFTW3 INTERFACE "HAVE_LIBFFTW")
 set(QMC_UTIL_LIBS ${QMC_UTIL_LIBS} ${FORTRAN_LIBRARIES})
 
 #-------------------------------------------------------------------
+#  set up MAGMA library
+#-------------------------------------------------------------------
+if (QMC_USE_MAGMA)
+  message("MAGMA_ROOT = ${MAGMA_ROOT}")
+  set(MAGMA_INC "${MAGMA_ROOT}/include")
+  set(MAGMA_BACKEND_INC "/opt/rocm-5.6.0/include")
+  set(MAGMA_LIB "${MAGMA_ROOT}/lib/libmagma.so")
+endif()
+
+#-------------------------------------------------------------------
 #  set up Libxml2 library
 #-------------------------------------------------------------------
 find_package(ZLIB)

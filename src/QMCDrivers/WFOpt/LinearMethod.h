@@ -23,6 +23,7 @@
 #include <NewTimer.h>
 #include <OhmmsPETE/OhmmsMatrix.h>
 
+
 namespace qmcplusplus
 {
 ///forward declaration of a cost function
@@ -35,13 +36,34 @@ class LinearMethod
   // obtain the range of non-linear parameters
   void getNonLinearRange(int& first, int& last, const QMCCostFunctionBase& optTarget) const;
 
+  bool magma_initialized_ = false;
+  int* magma_queue_;
+
 public:
+  void solveGeneralizedEigenvalues(Matrix<Real>& A,
+                                   Matrix<Real>& B,
+                                   std::vector<Real>& eigenvals,
+                                   Matrix<Real>& eigenvectors) const;
+  Real solveGeneralizedEigenvalues_Inv(Matrix<Real>& A,
+                                       Matrix<Real>& B,
+                                       std::vector<Real>& eigenvals,
+                                       Matrix<Real>& eigenvectors) const;
+  Real solveGeneralizedEigenvaluesMagma(Matrix<Real>& A,
+                                        Matrix<Real>& B,
+                                        std::vector<Real>& eigenvals,
+                                        Matrix<Real>& eigenvectors);
   //asymmetric generalized EV
   Real getLowestEigenvector(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev) const;
+  Real getLowestEigenvector_Inv(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev) const;
   //asymmetric EV
   Real getLowestEigenvector(Matrix<Real>& A, std::vector<Real>& ev) const;
+
+
+  Real getLowestEigenvectorMagma(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev);
   // compute a rescale factor. Ye: Where is the method from?
   Real getNonLinearRescale(std::vector<Real>& dP, Matrix<Real>& S, const QMCCostFunctionBase& optTarget) const;
+
+  virtual ~LinearMethod();
 };
 } // namespace qmcplusplus
 #endif

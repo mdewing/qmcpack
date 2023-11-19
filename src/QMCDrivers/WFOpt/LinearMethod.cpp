@@ -20,9 +20,143 @@
 #include <vector>
 #include "QMCCostFunctionBase.h"
 #include <CPU/BLAS.hpp>
+#include "Numerics/MatrixOperators.h"
+#include "Numerics/DeterminantOperators.h"
+
 
 namespace qmcplusplus
 {
+// A - Ham
+// B - Overlap
+LinearMethod::Real LinearMethod::solveGeneralizedEigenvalues_Inv(Matrix<Real>& A,
+                                                                 Matrix<Real>& B,
+                                                                 std::vector<Real>& eigenvals,
+                                                                 Matrix<Real>& eigenvectors) const
+{
+  int Nl = A.rows();
+  assert(A.rows() == A.cols());
+  assert(Nl == eigenvals.size());
+  assert(Nl == eigenvectors.rows());
+  assert(Nl == eigenvectors.cols());
+#if 0
+  app_log() << "before Inv " << std::endl;
+  for (int i = 0; i < Nl; i++) {
+    for (int j = 0; j < Nl; j++) {
+      app_log() << " " << B.data()[Nl*i+j] << " ";
+    }
+    app_log() << std::endl;
+  }
+#endif
+
+  invert_matrix(B, false);
+
+#if 0
+  app_log() << "after Inv " << std::endl;
+  for (int i = 0; i < Nl; i++) {
+    for (int j = 0; j < Nl; j++) {
+      app_log() << " " << B.data()[Nl*i+j] << " ";
+    }
+    app_log() << std::endl;
+  }
+#endif
+
+  Matrix<double> prdMat(Nl, Nl);
+
+  qmcplusplus::MatrixOperators::product(B, A, prdMat);
+
+  // transpose the result (why?)
+  for (int i = 0; i < Nl; i++)
+    for (int j = i + 1; j < Nl; j++)
+      std::swap(prdMat(i, j), prdMat(j, i));
+
+#if 0
+  app_log() << "prod " << std::endl;
+  for (int i = 0; i < Nl; i++) {
+    for (int j = 0; j < Nl; j++) {
+      app_log() << " " << prdMat.data()[Nl*i+j] << " ";
+    }
+    app_log() << std::endl;
+  }
+#endif
+
+  double zerozero = prdMat(0, 0);
+
+  //   Getting the optimal worksize
+  char jl('N');
+  char jr('V');
+  std::vector<Real> alphar(Nl), alphai(Nl);
+  //Matrix<Real> eigenT(Nl, Nl);
+  Matrix<Real> eigenD(Nl, Nl);
+  int info;
+  int lwork(-1);
+  std::vector<Real> work(1);
+  LAPACK::geev(&jl, &jr, &Nl, prdMat.data(), &Nl, &alphar[0], &alphai[0], eigenD.data(), &Nl, eigenvectors.data(), &Nl,
+               &work[0], &lwork, &info);
+  lwork = int(work[0]);
+  work.resize(lwork);
+
+  LAPACK::geev(&jl, &jr, &Nl, prdMat.data(), &Nl, &alphar[0], &alphai[0], eigenD.data(), &Nl, eigenvectors.data(), &Nl,
+               &work[0], &lwork, &info);
+  if (info != 0)
+  {
+    APP_ABORT("Invalid Matrix Diagonalization Function!");
+  }
+
+  for (int i = 0; i < Nl; i++)
+  {
+    eigenvals[i] = alphar[i];
+  }
+
+  return zerozero;
+}
+
+void LinearMethod::solveGeneralizedEigenvalues(Matrix<Real>& A,
+                                               Matrix<Real>& B,
+                                               std::vector<Real>& eigenvals,
+                                               Matrix<Real>& eigenvectors) const
+{
+  int Nl = A.rows();
+  assert(A.rows() == A.cols());
+  assert(Nl == eigenvals.size());
+  assert(Nl == eigenvectors.rows());
+  assert(Nl == eigenvectors.cols());
+
+  // transpose the A and B (row-major vs. column-major)
+  for (int i = 0; i < Nl; i++)
+    for (int j = i + 1; j < Nl; j++)
+    {
+      std::swap(A(i, j), A(j, i));
+      std::swap(B(i, j), B(j, i));
+    }
+  //   Getting the optimal worksize
+  char jl('N');
+  char jr('V');
+  std::vector<Real> alphar(Nl), alphai(Nl), beta(Nl);
+  //Matrix<Real> eigenT(Nl, Nl);
+  int info;
+  int lwork(-1);
+  std::vector<Real> work(1);
+  Real tt(0);
+  int t(1);
+  LAPACK::ggev(&jl, &jr, &Nl, A.data(), &Nl, B.data(), &Nl, &alphar[0], &alphai[0], &beta[0], &tt, &t,
+               eigenvectors.data(), &Nl, &work[0], &lwork, &info);
+  lwork = int(work[0]);
+  work.resize(lwork);
+
+  LAPACK::ggev(&jl, &jr, &Nl, A.data(), &Nl, B.data(), &Nl, &alphar[0], &alphai[0], &beta[0], &tt, &t,
+               eigenvectors.data(), &Nl, &work[0], &lwork, &info);
+  if (info != 0)
+  {
+    APP_ABORT("Invalid Matrix Diagonalization Function!");
+  }
+
+  for (int i = 0; i < Nl; i++)
+  {
+    eigenvals[i] = alphar[i] / beta[i];
+  }
+}
+// A - overlap
+// B - Hamiltonian
 LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev) const
 {
   int Nl(ev.size());
@@ -51,6 +185,7 @@ LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, Matrix<Re
   for (int i = 0; i < Nl; i++)
   {
     Real evi(alphar[i] / beta[i]);
+    app_log() << i << " Raw evals " << evi << std::endl;
     if (std::abs(evi) < 1e10)
     {
       mappedEigenvalues[i].first  = evi;
@@ -63,10 +198,16 @@ LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, Matrix<Re
     }
   }
   std::sort(mappedEigenvalues.begin(), mappedEigenvalues.end());
+  app_log() << "min = " << mappedEigenvalues[0].second << std::endl;
+  app_log() << "first evec = " << eigenT(mappedEigenvalues[0].second, 0) << std::endl;
   for (int i = 0; i < Nl; i++)
+  {
+    app_log() << i << " Raw evec " << eigenT(mappedEigenvalues[0].second, i) << std::endl;
     ev[i] = eigenT(mappedEigenvalues[0].second, i) / eigenT(mappedEigenvalues[0].second, 0);
+  }
   return mappedEigenvalues[0].first;
 }
+
 
 LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, std::vector<Real>& ev) const
 {
@@ -145,6 +286,38 @@ void LinearMethod::getNonLinearRange(int& first, int& last, const QMCCostFunctio
   }
   //     returns the number of non-linear parameters.
   //    app_log()<<"line params: "<<first<<" "<<last<< std::endl;
+}
+
+LinearMethod::Real LinearMethod::getLowestEigenvector_Inv(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev) const
+{
+  int Nl(ev.size());
+
+  Matrix<Real> eigenT(Nl, Nl);
+  std::vector<Real> alphar(Nl);
+
+  double zerozero = solveGeneralizedEigenvalues_Inv(A, B, alphar, eigenT);
+
+  std::vector<std::pair<Real, int>> mappedEigenvalues(Nl);
+  for (int i = 0; i < Nl; i++)
+  {
+    Real evi(alphar[i]);
+    if ((evi < zerozero) && (evi > (zerozero - 1e2)))
+    {
+      mappedEigenvalues[i].first  = (evi - zerozero + 2.0) * (evi - zerozero + 2.0);
+      mappedEigenvalues[i].second = i;
+    }
+    else
+    {
+      mappedEigenvalues[i].first  = std::numeric_limits<Real>::max();
+      mappedEigenvalues[i].second = i;
+    }
+  }
+  std::sort(mappedEigenvalues.begin(), mappedEigenvalues.end());
+  //         for (int i=0; i<4; i++) app_log()<<i<<": "<<alphar[mappedEigenvalues[i].second]<< std::endl;
+  for (int i = 0; i < Nl; i++)
+    ev[i] = eigenT(mappedEigenvalues[0].second, i) / eigenT(mappedEigenvalues[0].second, 0);
+  return alphar[mappedEigenvalues[0].second];
+  //     }
 }
 
 LinearMethod::Real LinearMethod::getNonLinearRescale(std::vector<Real>& dP,

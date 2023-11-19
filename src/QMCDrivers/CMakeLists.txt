@@ -89,6 +89,9 @@ if(BUILD_LMYENGINE_INTERFACE)
   set(QMCDRIVERS ${QMCDRIVERS} LMYEngineInterface/LMYE_QMCCostFunction.cpp)
   set(QMCDRIVERS ${QMCDRIVERS} LMYEngineInterface/LMYE_QMCCostFunctionBatched.cpp)
 endif(BUILD_LMYENGINE_INTERFACE)
+if (QMC_USE_MAGMA)
+  set(QMCDRIVERS ${QMCDRIVERS} WFOpt/LinearMethodMagma.cpp)
+endif()
 
 ####################################
 # create libqmcdriver
@@ -102,6 +105,11 @@ endif()
 target_include_directories(qmcdriver PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 target_link_libraries(qmcdriver PUBLIC qmcham qmcestimators)
+if (QMC_USE_MAGMA)
+  target_include_directories(qmcdriver PRIVATE "${MAGMA_INC}")
+  target_include_directories(qmcdriver PRIVATE "${MAGMA_BACKEND_INC}")
+  target_link_libraries(qmcdriver PUBLIC "${MAGMA_LIB}")
+endif()
 
 target_link_libraries(qmcdriver PRIVATE platform_LA Boost::boost)
 if(BUILD_LMYENGINE_INTERFACE)
