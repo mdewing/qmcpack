@@ -340,5 +340,11 @@ LinearMethod::Real LinearMethod::getNonLinearRescale(std::vector<Real>& dP,
   return rescale;
 }
 
+#ifndef QMC_USE_MAGMA
+LinearMethod::~LinearMethod()
+{
+}
+#endif
+
 
 } // namespace qmcplusplus

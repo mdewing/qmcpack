@@ -1653,20 +1653,13 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
   RealType lowestEV = 0.;
   {
     ScopedTimer local(eigenvalue_timer_);
-    if (false)
-    {
-      app_log() << "Using CPU version to solve Eigenvalue problem" << std::endl;
-      lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections);
-    }
-    else
-    {
 #ifdef QMC_USE_MAGMA
-      app_log() << "Using Magma GPU version to solve Eigenvalue problem" << std::endl;
-      lowestEV = getLowestEigenvectorMagma(hamMat, invMat, parameterDirections);
+    app_log() << "Using Magma GPU version to solve Eigenvalue problem" << std::endl;
+    lowestEV = getLowestEigenvectorMagma(hamMat, invMat, parameterDirections);
 #else
-      throw std::runtime_error("No compiled with MAGMA!\n");
+    app_log() << "Using CPU version to solve Eigenvalue problem" << std::endl;
+    lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections);
 #endif
-    }
   }
 
   // compute the scaling constant to apply to the update

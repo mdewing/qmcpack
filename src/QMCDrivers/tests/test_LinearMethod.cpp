@@ -18,6 +18,7 @@
 namespace qmcplusplus
 {
 
+#ifdef QMC_USE_MAGMA
 TEST_CASE("getLowestEigenvectorMagma", "[drivers]")
 {
   LinearMethod lm;
@@ -33,6 +34,7 @@ TEST_CASE("getLowestEigenvectorMagma", "[drivers]")
   double lowest_ev = lm.getLowestEigenvectorMagma(Ovlp, Ham, ev);
   app_log() << "Lowest ev = " << lowest_ev << std::endl;
 }
+#endif
 
 TEST_CASE("getLowestEigenvector_v1", "[drivers]")
 {
@@ -55,6 +57,7 @@ TEST_CASE("getLowestEigenvector_v1", "[drivers]")
   double lowest_ev1 = lm.getLowestEigenvector_Inv(Ham, Ovlp, ev1);
   app_log() << "Lowest ev = " << lowest_ev1 << std::endl;
 
+#ifdef QMC_USE_MAGMA
   Ovlp(0, 0) = 1.0;
   Ovlp(0, 1) = 0.1;
   Ovlp(1, 0) = 0.15;
@@ -70,6 +73,7 @@ TEST_CASE("getLowestEigenvector_v1", "[drivers]")
   CHECK(ev1[0] == Approx(ev2[0]));
   // Not sure why this fails.  There seems be a different in eigenvectors between dggev and dgeev.
   CHECK(ev1[1] == Approx(ev2[1]));
+#endif
 }
 
 TEST_CASE("solveGeneralizedEigenvalues_v1", "[drivers]")
@@ -136,6 +140,7 @@ TEST_CASE("solveGeneralizedEigenvalues_v2", "[drivers]")
   CHECK(evec(1, 1) == Approx(-0.99980149));
 }
 
+#ifdef QMC_USE_MAGMA
 TEST_CASE("solveGeneralizedEigenvaluesMagma", "[drivers]")
 {
   LinearMethod lm;
@@ -167,6 +172,7 @@ TEST_CASE("solveGeneralizedEigenvaluesMagma", "[drivers]")
   CHECK(evec(1, 0) == Approx(-0.01992456));
   CHECK(evec(1, 1) == Approx(-0.99980149));
 }
+#endif
 
 TEST_CASE("solveGeneralizedEigenvaluesCompare", "[drivers]")
 {
@@ -235,6 +241,7 @@ TEST_CASE("solveGeneralizedEigenvaluesCompare", "[drivers]")
   }
 #endif
 
+#ifdef QMC_USE_MAGMA
   Ovlp_copy = Ovlp;
   Ham_copy  = Ham;
 
@@ -270,6 +277,7 @@ TEST_CASE("solveGeneralizedEigenvaluesCompare", "[drivers]")
   {
     CHECK(ev1[i] == Approx(ev2[i]));
   }
+#endif
 }
 
 } // namespace qmcplusplus
