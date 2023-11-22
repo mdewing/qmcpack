@@ -764,10 +764,9 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
       HDsaved1.attachReference(HDsaved_ptr, numParams, rank_local_num_samples_);
 
       Return_rt left1(0.0);
-      Return_rt left2(0.0);
       Return_rt left3(0.0);
       Return_rt left4(0.0);
-#pragma omp parallel for reduction(+ : left1, left2, left3, left4)
+#pragma omp parallel for reduction(+ : left1, left3, left4)
       for (int iw = 0; iw < rank_local_num_samples_; iw++)
       {
         Return_rt weight   = Records1(iw, REWEIGHT) * wgtinv;
@@ -780,7 +779,6 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
         //Left(0, pm + 1) += b2 * std::real(vterm) * weight;
         //Left(pm + 1, 0) += b2 * std::real(vterm) * weight;
         left1 += b2 * std::real(vterm) * weight;
-        left2 += b2 * std::real(vterm) * weight;
         //                 Hamiltonian
         //Left(0, pm + 1) += (1 - b2) * std::real(wfe);
         //Left(pm + 1, 0) += (1 - b2) * std::real(wfd) * eloc_new;
@@ -788,7 +786,7 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
         left4 += (1 - b2) * std::real(wfd) * eloc_new;
       }
       Left1(0, pm + 1) = left1 + left3;
-      Left1(pm + 1, 0) = left2 + left4;
+      Left1(pm + 1, 0) = left1 + left4;
     }
 
 #pragma omp target teams distribute
@@ -866,6 +864,8 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
   std::vector<Return_t> D_avg(numParams, 0.0);
   Return_rt wgtinv = 1.0 / SumValue[SUM_WGT];
 
+
+
   for (int iw = 0; iw < rank_local_num_samples_; iw++)
   {
     Return_rt weight = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
@@ -874,8 +874,6 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
       D_avg[pm] += DerivRecords_(iw, pm) * weight;
     }
   }
-
-  myComm->allreduce(D_avg);
 
   //const Matrix<Return_t>& Dsaved = DerivRecords_;
   //const Matrix<Return_t>& HDsaved = HDerivRecords_;
@@ -888,9 +886,15 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
       HDsaved(pm, iw) = HDerivRecords_(iw, pm);
     }
 
+  myComm->allreduce(D_avg);
+
+
 #pragma omp parallel for
   for (int pm = 0; pm < numParams; pm++)
   {
+    Return_rt left1(0.0);
+    Return_rt left2(0.0);
+    Return_rt left3(0.0);
     for (int iw = 0; iw < rank_local_num_samples_; iw++)
     {
       Return_rt weight   = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
@@ -900,35 +904,49 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
       Return_t vterm     = HDsaved(pm, iw) * (eloc_new - curAvg_w) +
           (Dsaved(pm, iw) - D_avg[pm]) * eloc_new * (eloc_new - RealType(2.0) * curAvg_w);
       //                 Variance
-      Left(0, pm + 1) += b2 * std::real(vterm) * weight;
-      Left(pm + 1, 0) += b2 * std::real(vterm) * weight;
+      //Left(0, pm + 1) += b2 * std::real(vterm) * weight;
+      //Left(pm + 1, 0) += b2 * std::real(vterm) * weight;
+      left1 += b2 * std::real(vterm) * weight;
       //                 Hamiltonian
-      Left(0, pm + 1) += (1 - b2) * std::real(wfe);
-      Left(pm + 1, 0) += (1 - b2) * std::real(wfd) * eloc_new;
+      //Left(0, pm + 1) += (1 - b2) * std::real(wfe);
+      //Left(pm + 1, 0) += (1 - b2) * std::real(wfd) * eloc_new;
+      left2 += (1 - b2) * std::real(wfe);
+      left3 += (1 - b2) * std::real(wfd) * eloc_new;
     }
+    Left(0, pm + 1) = left1 + left2;
+    Left(pm + 1, 0) = left1 + left3;
   }
 #pragma omp parallel for
   for (int pm = 0; pm < numParams; pm++)
   {
     for (int pm2 = 0; pm2 < numParams; pm2++)
     {
+      Return_rt left1(0.0);
+      Return_rt left2(0.0);
+      Return_rt right1(0.0);
       for (int iw = 0; iw < rank_local_num_samples_; iw++)
       {
         Return_rt weight   = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
         Return_rt eloc_new = RecordsOnNode_(iw, ENERGY_NEW);
         Return_t wfd       = (Dsaved(pm, iw) - D_avg[pm]) * weight;
         //                Hamiltonian
-        Left(pm + 1, pm2 + 1) +=
+        //Left(pm + 1, pm2 + 1) +=
+        //    std::real((1 - b2) * std::conj(wfd) * (HDsaved(pm2, iw) + (Dsaved(pm2, iw) - D_avg[pm2]) * eloc_new));
+        left1 +=
             std::real((1 - b2) * std::conj(wfd) * (HDsaved(pm2, iw) + (Dsaved(pm2, iw) - D_avg[pm2]) * eloc_new));
         //                Overlap
         RealType ovlij = std::real(std::conj(wfd) * (Dsaved(pm2, iw) - D_avg[pm2]));
-        Right(pm + 1, pm2 + 1) += ovlij;
+        //Right(pm + 1, pm2 + 1) += ovlij;
+        right1 += ovlij;
         //                Variance
         RealType varij = weight *
             std::real((HDsaved(pm, iw) - RealType(2.0) * std::conj(Dsaved(pm, iw) - D_avg[pm]) * eloc_new) *
                       (HDsaved(pm2, iw) - RealType(2.0) * (Dsaved(pm2, iw) - D_avg[pm2]) * eloc_new));
-        Left(pm + 1, pm2 + 1) += b2 * (varij + V_avg * ovlij);
+        //Left(pm + 1, pm2 + 1) += b2 * (varij + V_avg * ovlij);
+        left2 += b2 * (varij + V_avg * ovlij);
       }
+      Left(pm + 1, pm2 + 1)  = left1 + left2;
+      Right(pm + 1, pm2 + 1) = right1;
     }
   }
   myComm->allreduce(Right);
@@ -969,7 +987,6 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
 
   myComm->allreduce(D_avg);
 
-#pragma omp parallel for
   for (int iw = 0; iw < rank_local_num_samples_; iw++)
   {
     Return_rt weight                = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
@@ -977,6 +994,7 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
     const Matrix<Return_t>& Dsaved  = DerivRecords_;
     const Matrix<Return_t>& HDsaved = HDerivRecords_;
 
+#pragma omp parallel for
     for (int pm = 0; pm < numParams; pm++)
     {
       Return_t wfe   = (HDsaved(iw, pm) + (Dsaved(iw, pm) - D_avg[pm]) * eloc_new) * weight;
