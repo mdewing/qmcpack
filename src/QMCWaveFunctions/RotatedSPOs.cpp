@@ -161,6 +161,19 @@ void RotatedSPOs::writeVariationalParameters(hdf_archive& hout)
       full_params[i] = myVarsFull[i];
 
     hout.write(full_params, rot_global_name);
+
+
+    std::string full_indices_name("full_indices");
+    Matrix<uint64_t> full_indices(nparam_full, 2);
+    for (int i = 0; i < nparam_full; i++) {
+      full_indices(i, 0) = m_full_rot_inds[i].first;
+      full_indices(i, 1) = m_full_rot_inds[i].second;
+    }
+
+    hout.write(full_indices, full_indices_name);
+    const size_t nmo = Phi->getOrbitalSetSize();
+    hout.write(nmo, "nmo");
+
     hout.pop();
   }
   else
