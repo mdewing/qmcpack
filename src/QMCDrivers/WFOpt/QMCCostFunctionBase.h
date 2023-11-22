@@ -322,6 +322,8 @@ protected:
 
   void resetOptimizableObjects(TrialWaveFunction& psi, const opt_variables_type& opt_variables) const;
 
+  std::string fill_function = std::string("original");
+
 #ifdef HAVE_LMY_ENGINE
   virtual Return_rt LMYEngineCost_detail(cqmc::engine::LMYEngine<Return_t>* EngineObj)
   {

@@ -331,6 +331,7 @@ bool QMCCostFunctionBase::put(xmlNodePtr q)
   m_param.add(omega_shift, "omega");
   m_param.add(do_override_output, "output_vp_override", {true});
   m_param.add(variational_subset_str, "variational_subset");
+  m_param.add(fill_function, "fill_function");
   m_param.put(q);
 
   if (!includeNonlocalH.empty())

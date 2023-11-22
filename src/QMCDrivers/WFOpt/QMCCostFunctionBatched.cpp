@@ -736,9 +736,11 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
   Return_rt* Records_ptr = RecordsOnNode_.data();
 
   const uint64_t data_bytes = data_size * sizeof(Return_t);
-  const uint64_t out_bytes = out_size * sizeof(Return_t);
-  app_log() << "Data matrices size, each = " << data_bytes/1000 << " K" <<  " total = " << 2*data_bytes/1e6 << " M" << std::endl;
-  app_log() << "Output matrices size, each = " << out_bytes/1000 << " K" <<  " total = " << 2*out_bytes/1e6 << " M" << std::endl;
+  const uint64_t out_bytes  = out_size * sizeof(Return_t);
+  app_log() << "Data matrices size, each = " << data_bytes / 1000 << " K" << " total = " << 2 * data_bytes / 1e6 << " M"
+            << std::endl;
+  app_log() << "Output matrices size, each = " << out_bytes / 1000 << " K" << " total = " << 2 * out_bytes / 1e6 << " M"
+            << std::endl;
 
 
 #pragma omp target data map(tofrom : Left_ptr[ : out_size], Right_ptr[ : out_size])         \
@@ -886,6 +888,7 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
       HDsaved(pm, iw) = HDerivRecords_(iw, pm);
     }
 
+#pragma omp parallel for
   for (int pm = 0; pm < numParams; pm++)
   {
     for (int iw = 0; iw < rank_local_num_samples_; iw++)
@@ -904,6 +907,7 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
       Left(pm + 1, 0) += (1 - b2) * std::real(wfd) * eloc_new;
     }
   }
+#pragma omp parallel for
   for (int pm = 0; pm < numParams; pm++)
   {
     for (int pm2 = 0; pm2 < numParams; pm2++)
@@ -965,6 +969,7 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
 
   myComm->allreduce(D_avg);
 
+#pragma omp parallel for
   for (int iw = 0; iw < rank_local_num_samples_; iw++)
   {
     Return_rt weight                = RecordsOnNode_(iw, REWEIGHT) * wgtinv;
@@ -1021,10 +1026,31 @@ QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonian
 QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonianMatrices(Matrix<Return_rt>& Left,
                                                                                          Matrix<Return_rt>& Right)
 {
-  //return fillOverlapHamiltonianMatricesOriginal(Left, Right);
-  //return fillOverlapHamiltonianMatricesMinimal(Left, Right);
-  //return fillOverlapHamiltonianMatricesTranspose(Left, Right);
-  return fillOverlapHamiltonianMatricesOffload(Left, Right);
+  if (fill_function == "original")
+  {
+    app_log() << "Using fillOverlapHamiltonianMatrices: original" << std::endl;
+    return fillOverlapHamiltonianMatricesOriginal(Left, Right);
+  }
+  else if (fill_function == "minimal")
+  {
+    app_log() << "Using fillOverlapHamiltonianMatrices: minimal" << std::endl;
+    return fillOverlapHamiltonianMatricesMinimal(Left, Right);
+  }
+  else if (fill_function == "transpose")
+  {
+    app_log() << "Using fillOverlapHamiltonianMatrices: transpose" << std::endl;
+    return fillOverlapHamiltonianMatricesTranspose(Left, Right);
+  }
+  else if (fill_function == "offload")
+  {
+    app_log() << "Using fillOverlapHamiltonianMatrices: offload" << std::endl;
+    return fillOverlapHamiltonianMatricesOffload(Left, Right);
+  }
+  else
+  {
+    app_log() << " Unknown fillOverlapHamiltonianMatrices function: " << fill_function << std::endl;
+    throw std::runtime_error("Unknown fillOverlapHamiltonianMatrices function");
+  }
 }
 
 QMCCostFunctionBatched::Return_rt QMCCostFunctionBatched::fillOverlapHamiltonianMatricesOriginal(
