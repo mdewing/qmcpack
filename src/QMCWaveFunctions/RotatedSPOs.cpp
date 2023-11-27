@@ -1313,7 +1313,7 @@ $
         ValueType b   = Y6(0, 1);
         ValueType c   = Y6(1, 0);
         ValueType d   = Y6(1, 1);
-        ValueType det = a * b - c * d;
+        ValueType det = a * d - b * c;
         Y6(0, 0)      = d / det;
         Y6(0, 1)      = -b / det;
         Y6(1, 0)      = -c / det;
@@ -1584,7 +1584,7 @@ void RotatedSPOs::table_method_evalWF(Vector<ValueType>& dlogpsi,
         ValueType b   = Y6(0, 1);
         ValueType c   = Y6(1, 0);
         ValueType d   = Y6(1, 1);
-        ValueType det = a * b - c * d;
+        ValueType det = a * d - b * c;
         Y6(0, 0)      = d / det;
         Y6(0, 1)      = -b / det;
         Y6(1, 0)      = -c / det;
