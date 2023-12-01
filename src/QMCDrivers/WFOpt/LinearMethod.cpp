@@ -234,12 +234,13 @@ LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, std::vect
     APP_ABORT("Invalid Matrix Diagonalization Function!");
   }
   std::vector<std::pair<Real, int>> mappedEigenvalues(Nl);
+  double ev_target = 2.0;
   for (int i = 0; i < Nl; i++)
   {
     Real evi(alphar[i]);
     if ((evi < zerozero) && (evi > (zerozero - 1e2)))
     {
-      mappedEigenvalues[i].first  = (evi - zerozero + 2.0) * (evi - zerozero + 2.0);
+      mappedEigenvalues[i].first  = (evi - zerozero + ev_target) * (evi - zerozero + ev_target);
       mappedEigenvalues[i].second = i;
     }
     else
@@ -288,7 +289,7 @@ void LinearMethod::getNonLinearRange(int& first, int& last, const QMCCostFunctio
   //    app_log()<<"line params: "<<first<<" "<<last<< std::endl;
 }
 
-LinearMethod::Real LinearMethod::getLowestEigenvector_Inv(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev) const
+LinearMethod::Real LinearMethod::getLowestEigenvector_Inv(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev, double ev_target) const
 {
   int Nl(ev.size());
 
@@ -303,7 +304,7 @@ LinearMethod::Real LinearMethod::getLowestEigenvector_Inv(Matrix<Real>& A, Matri
     Real evi(alphar[i]);
     if ((evi < zerozero) && (evi > (zerozero - 1e2)))
     {
-      mappedEigenvalues[i].first  = (evi - zerozero + 2.0) * (evi - zerozero + 2.0);
+      mappedEigenvalues[i].first  = (evi - zerozero + ev_target) * (evi - zerozero + ev_target);
       mappedEigenvalues[i].second = i;
     }
     else

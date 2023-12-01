@@ -587,9 +587,13 @@ void QMCFixedSampleLinearOptimizeBatched::process(xmlNodePtr q)
   m_param.add(OutputMatricesHDF, "output_matrices_hdf", {"no", "yes"});
   m_param.add(FreezeParameters, "freeze_parameters", {"no", "yes"});
 
+  ev_target_ = 2.0;
+  m_param.add(ev_target_, "ev_target");
+
   oAttrib.put(q);
   m_param.put(q);
 
+  app_log() << "eigenvalue target (ev_target) = " << ev_target_ << std::endl;
   do_output_matrices_csv_ = (OutputMatrices == "yes");
   do_output_matrices_hdf_ = (OutputMatricesHDF == "yes");
   freeze_parameters_      = (FreezeParameters == "yes");
@@ -1650,6 +1654,7 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
       hamMat(i, j) += bestShift_s * ovlMat(i, j);
 
   // compute the lowest eigenvalue of the product matrix and the corresponding eigenvector
+  double ev_target = 2.0;
   RealType lowestEV = 0.;
   {
     ScopedTimer local(eigenvalue_timer_);
@@ -1658,7 +1663,7 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
     lowestEV = getLowestEigenvectorMagma(hamMat, invMat, parameterDirections);
 #else
     app_log() << "Using CPU version to solve Eigenvalue problem" << std::endl;
-    lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections);
+    lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections, ev_target);
 #endif
   }
 

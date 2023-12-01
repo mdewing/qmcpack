@@ -180,6 +180,7 @@ private:
   RealType param_tol;
   //-------------------------------------
 
+  double ev_target_;
 
   ///Number of iterations maximum before generating new configurations.
   int nstabilizers;
