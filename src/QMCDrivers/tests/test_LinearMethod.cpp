@@ -54,7 +54,8 @@ TEST_CASE("getLowestEigenvector_v1", "[drivers]")
   Ham(1, 1) = 1.0;
   std::vector<double> ev1(N);
   //double lowest_ev1 = lm.getLowestEigenvector(Ham, Ovlp, ev1);
-  double lowest_ev1 = lm.getLowestEigenvector_Inv(Ham, Ovlp, ev1);
+  double ev_target = 2.0;
+  double lowest_ev1 = lm.getLowestEigenvector_Inv(Ham, Ovlp, ev1, ev_target);
   app_log() << "Lowest ev = " << lowest_ev1 << std::endl;
 
 #ifdef QMC_USE_MAGMA
