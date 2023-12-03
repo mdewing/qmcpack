@@ -1630,7 +1630,7 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
   }
 
   hdf_archive hout;
-  if (do_output_matrices_hdf_)
+  if (do_output_matrices_hdf_ && is_manager()) // Only output matrix on rank 0
   {
     std::string newh5 = get_root_name() + ".linear_matrices.h5";
     hout.create(newh5, H5F_ACC_TRUNC);
@@ -1670,7 +1670,7 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
   // compute the scaling constant to apply to the update
   objFuncWrapper_.Lambda = getNonLinearRescale(parameterDirections, ovlMat, *optTarget);
 
-  if (do_output_matrices_hdf_)
+  if (do_output_matrices_hdf_ && is_manager())
   {
     hout.write(lowestEV, "lowest_eigenvalue");
     hout.write(parameterDirections, "scaled_eigenvector");
