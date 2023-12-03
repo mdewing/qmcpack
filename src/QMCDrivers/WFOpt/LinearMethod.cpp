@@ -160,6 +160,13 @@ void LinearMethod::solveGeneralizedEigenvalues(Matrix<Real>& A,
 LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev) const
 {
   int Nl(ev.size());
+  // transpose the A and B (row-major vs. column-major)
+  for (int i = 0; i < Nl; i++)
+    for (int j = i + 1; j < Nl; j++)
+    {
+      std::swap(A(i, j), A(j, i));
+      std::swap(B(i, j), B(j, i));
+    }
   //   Getting the optimal worksize
   char jl('N');
   char jr('V');
@@ -185,7 +192,7 @@ LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, Matrix<Re
   for (int i = 0; i < Nl; i++)
   {
     Real evi(alphar[i] / beta[i]);
-    app_log() << i << " Raw evals " << evi << std::endl;
+    //app_log() << i << " Raw evals " << evi << std::endl;
     if (std::abs(evi) < 1e10)
     {
       mappedEigenvalues[i].first  = evi;
@@ -199,10 +206,10 @@ LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, Matrix<Re
   }
   std::sort(mappedEigenvalues.begin(), mappedEigenvalues.end());
   app_log() << "min = " << mappedEigenvalues[0].second << std::endl;
-  app_log() << "first evec = " << eigenT(mappedEigenvalues[0].second, 0) << std::endl;
+  //app_log() << "first evec = " << eigenT(mappedEigenvalues[0].second, 0) << std::endl;
   for (int i = 0; i < Nl; i++)
   {
-    app_log() << i << " Raw evec " << eigenT(mappedEigenvalues[0].second, i) << std::endl;
+    //app_log() << i << " Raw evec " << eigenT(mappedEigenvalues[0].second, i) << std::endl;
     ev[i] = eigenT(mappedEigenvalues[0].second, i) / eigenT(mappedEigenvalues[0].second, 0);
   }
   return mappedEigenvalues[0].first;

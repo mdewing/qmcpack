@@ -590,6 +590,8 @@ void QMCFixedSampleLinearOptimizeBatched::process(xmlNodePtr q)
   ev_target_ = 2.0;
   m_param.add(ev_target_, "ev_target");
 
+  m_param.add(ev_solver_, "ev_solver",{"inverse","general"});
+
   oAttrib.put(q);
   m_param.put(q);
 
@@ -1663,7 +1665,14 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
     lowestEV = getLowestEigenvectorMagma(hamMat, invMat, parameterDirections);
 #else
     app_log() << "Using CPU version to solve Eigenvalue problem" << std::endl;
-    lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections, ev_target);
+    if (ev_solver_ == "general") {
+        app_log() << "Using generalized eigenvalue solver (ggev)" << std::endl;
+        lowestEV = getLowestEigenvector(hamMat, invMat, parameterDirections);
+    } else {
+        app_log() << "Using inverse + regular eigenvalue solver (geev)" << std::endl;
+        lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections, ev_target);
+    }  
+
 #endif
   }
 

@@ -182,6 +182,9 @@ private:
 
   double ev_target_;
 
+  std::string ev_solver_;
+
+
   ///Number of iterations maximum before generating new configurations.
   int nstabilizers;
   RealType stabilizerScale, bigChange, exp0;
