@@ -149,5 +149,8 @@
 /* Use MAGMA to solve eigenvalue problem in optimizer */
 #cmakedefine QMC_USE_MAGMA @QMC_USE_MAGMA@
 
+/* Use ARPACK to solve eigenvalue problem in optimizer */
+#cmakedefine QMC_USE_ARPACK @QMC_USE_ARPACK@
+
 #endif // QMCPLUSPLUS_CONFIGURATION_H
 

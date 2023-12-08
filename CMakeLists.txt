@@ -643,6 +643,16 @@ if (QMC_USE_MAGMA)
 endif()
 
 #-------------------------------------------------------------------
+# Set up ARPACK-NG library
+#
+# https://github.com/opencollab/arpack-ng.git
+# Build with "ICB=ON" to enable the C++ interface
+#-------------------------------------------------------------------
+if (QMC_USE_ARPACK)
+  find_package(arpackng)
+endif()
+
+#-------------------------------------------------------------------
 #  set up Libxml2 library
 #-------------------------------------------------------------------
 find_package(ZLIB)

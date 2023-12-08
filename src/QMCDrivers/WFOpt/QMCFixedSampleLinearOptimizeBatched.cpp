@@ -590,7 +590,13 @@ void QMCFixedSampleLinearOptimizeBatched::process(xmlNodePtr q)
   ev_target_ = 2.0;
   m_param.add(ev_target_, "ev_target");
 
-  m_param.add(ev_solver_, "ev_solver",{"inverse","general"});
+  m_param.add(ev_solver_, "ev_solver",
+              {"inverse", "general"
+#ifdef QMC_USE_ARPACK
+               ,
+               "arpack"
+#endif
+              });
 
   oAttrib.put(q);
   m_param.put(q);
@@ -1656,7 +1662,7 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
       hamMat(i, j) += bestShift_s * ovlMat(i, j);
 
   // compute the lowest eigenvalue of the product matrix and the corresponding eigenvector
-  double ev_target = 2.0;
+  double ev_target  = 2.0;
   RealType lowestEV = 0.;
   {
     ScopedTimer local(eigenvalue_timer_);
@@ -1665,14 +1671,27 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
     lowestEV = getLowestEigenvectorMagma(hamMat, invMat, parameterDirections);
 #else
     app_log() << "Using CPU version to solve Eigenvalue problem" << std::endl;
-    if (ev_solver_ == "general") {
-        app_log() << "Using generalized eigenvalue solver (ggev)" << std::endl;
-        lowestEV = getLowestEigenvector(hamMat, invMat, parameterDirections);
-    } else {
-        app_log() << "Using inverse + regular eigenvalue solver (geev)" << std::endl;
-        lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections, ev_target);
-    }  
+    if (ev_solver_ == "general")
+    {
+      app_log() << "Using generalized eigenvalue solver (ggev)" << std::endl;
+      lowestEV = getLowestEigenvector(hamMat, invMat, parameterDirections);
+    }
+    else if (ev_solver_ == "arpack")
+    {
+#ifdef QMC_USE_ARPACK
+      app_log() << "Using iterative ARPACK eigenvalue solver" << std::endl;
+      lowestEV = getLowestEigenvectorARPACK(hamMat, invMat, parameterDirections);
+#else
+      app_log() << "ARPACK not compiled-in" << std::endl;
+      throw std::runtime_error("ARPACK not compiled in");
 
+#endif
+    }
+    else
+    {
+      app_log() << "Using inverse + regular eigenvalue solver (geev)" << std::endl;
+      lowestEV = getLowestEigenvector_Inv(hamMat, invMat, parameterDirections, ev_target);
+    }
 #endif
   }
 

@@ -211,6 +211,8 @@ LinearMethod::Real LinearMethod::getLowestEigenvector(Matrix<Real>& A, Matrix<Re
   {
     //app_log() << i << " Raw evec " << eigenT(mappedEigenvalues[0].second, i) << std::endl;
     ev[i] = eigenT(mappedEigenvalues[0].second, i) / eigenT(mappedEigenvalues[0].second, 0);
+    if (i < 10)
+      app_log() << i << " Raw evec " << eigenT(mappedEigenvalues[0].second, i) <<  " scaled " << ev[i] << std::endl;
   }
   return mappedEigenvalues[0].first;
 }

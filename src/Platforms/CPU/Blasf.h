@@ -53,6 +53,7 @@
 #define dsyr2k dsyr2k_
 #define dgetrf dgetrf_
 #define dgetri dgetri_
+#define dgetrs dgetrs_
 #define sgetrf sgetrf_
 #define sgetri sgetri_
 #define zgetrf zgetrf_
@@ -361,6 +362,9 @@ extern "C"
               std::complex<float>* work,
               const int&,
               int& st);
+
+  void dgetrs(const char& trans, const int& n, const int& nrhs, double* a, const int& lda, int const* ipiv, double* b, const int& ldb, int& info);
+
 
   void dgesvd(const char& JOBU,
               const char& JOBVT,

@@ -52,6 +52,17 @@ public:
                                         Matrix<Real>& B,
                                         std::vector<Real>& eigenvals,
                                         Matrix<Real>& eigenvectors);
+#ifdef QMC_USE_ARPACK
+  Real solveGeneralizedEigenvaluesARPACK(Matrix<Real>& A,
+                                         Matrix<Real>& B,
+                                         std::vector<Real>& eigenvals,
+                                         Matrix<Real>& eigenvectors);
+  Real solveGeneralizedEigenvaluesARPACK_mode2(Matrix<Real>& A,
+                                               Matrix<Real>& B,
+                                               std::vector<Real>& eigenvals,
+                                               Matrix<Real>& eigenvectors);
+  Real getLowestEigenvectorARPACK(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev);
+#endif
   //asymmetric generalized EV
   Real getLowestEigenvector(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev) const;
   Real getLowestEigenvector_Inv(Matrix<Real>& A, Matrix<Real>& B, std::vector<Real>& ev, double ev_target) const;

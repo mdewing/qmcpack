@@ -92,6 +92,9 @@ endif(BUILD_LMYENGINE_INTERFACE)
 if (QMC_USE_MAGMA)
   set(QMCDRIVERS ${QMCDRIVERS} WFOpt/LinearMethodMagma.cpp)
 endif()
+if (QMC_USE_ARPACK)
+  set(QMCDRIVERS ${QMCDRIVERS} WFOpt/LinearMethodARPACK.cpp)
+endif()
 
 ####################################
 # create libqmcdriver
@@ -109,6 +112,10 @@ if (QMC_USE_MAGMA)
   target_include_directories(qmcdriver PRIVATE "${MAGMA_INC}")
   target_include_directories(qmcdriver PRIVATE "${MAGMA_BACKEND_INC}")
   target_link_libraries(qmcdriver PUBLIC "${MAGMA_LIB}")
+endif()
+if (QMC_USE_ARPACK)
+  target_include_directories(qmcdriver PRIVATE ARPACK::ARPACK)
+  target_link_libraries(qmcdriver PUBLIC ARPACK::ARPACK)
 endif()
 
 target_link_libraries(qmcdriver PRIVATE platform_LA Boost::boost)

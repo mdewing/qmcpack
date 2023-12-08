@@ -36,6 +36,7 @@ TEST_CASE("getLowestEigenvectorMagma", "[drivers]")
 }
 #endif
 
+
 TEST_CASE("getLowestEigenvector_v1", "[drivers]")
 {
   LinearMethod lm;
@@ -239,6 +240,40 @@ TEST_CASE("solveGeneralizedEigenvaluesCompare", "[drivers]")
     for (int j = 0; j < N; j++) {
       CHECK(evec1(i,j) == Approx(evec2(i,j)));
     }
+  }
+#endif
+#ifdef QMC_USE_ARPACK
+  Ovlp_copy = Ovlp;
+  std::vector<double> ev5(2);
+  Matrix<double> evec5(N, 2);
+  lm.solveGeneralizedEigenvaluesARPACK(Ham_copy, Ovlp_copy, ev5, evec5);
+  for (int i = 0; i < N; i++)
+  {
+    app_log() << "Expected Eval " << ev1[i] << std::endl;
+  }
+  for (int i = 0; i < 2; i++)
+  {
+    app_log() << "ARPACK Eval " << ev5[i] << std::endl;
+  }
+
+  double tol = 1e-5;
+  for (int i = 0; i < 2; i++)
+  {
+    bool found = false;
+    double diff = 0.0;
+    for (int j = 0; j < N; j++) {
+      diff = ev5[i] - ev1[j];
+      if (std::abs(diff) < tol) {
+        found = true;
+        break;
+      }
+    }
+    if (found)
+       app_log() << "Matching eigenvalue found, diff = " << diff << std::endl;
+    else
+       app_log() << "NO matching eigenvalue found for " << ev5[i] << std::endl;
+
+    //CHECK(ev1[i] == Approx(ev5[i]));
   }
 #endif
 
