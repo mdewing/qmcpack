@@ -136,6 +136,8 @@ public:
 
   void addCJParams(xmlXPathContextPtr acontext, const char* cname);
 
+  virtual void outputParameterDerivativesHDF(hdf_archive& hout) {}
+
   virtual Return_rt fillOverlapHamiltonianMatrices(Matrix<Return_rt>& Left, Matrix<Return_rt>& Right) = 0;
 
 #ifdef HAVE_LMY_ENGINE

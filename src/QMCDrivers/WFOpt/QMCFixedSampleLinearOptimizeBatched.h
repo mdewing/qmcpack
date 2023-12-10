@@ -269,6 +269,9 @@ private:
   // Output Hamiltonian and overlap matrices in HDF format
   bool do_output_matrices_hdf_;
 
+  // Output parameter deriv samples in HDF format
+  bool do_output_parameter_derivatives_hdf_;
+
   // Flag to open the files on first pass and print header line
   bool output_matrices_initialized_;
 

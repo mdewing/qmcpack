@@ -84,6 +84,7 @@ QMCFixedSampleLinearOptimizeBatched::QMCFixedSampleLinearOptimizeBatched(
       MinMethod("OneShiftOnly"),
       do_output_matrices_csv_(false),
       do_output_matrices_hdf_(false),
+      do_output_parameter_derivatives_hdf_(false),
       output_matrices_initialized_(false),
       freeze_parameters_(false),
       generate_samples_timer_(createGlobalTimer("QMCLinearOptimizeBatched::GenerateSamples", timer_level_medium)),
@@ -577,6 +578,7 @@ void QMCFixedSampleLinearOptimizeBatched::process(xmlNodePtr q)
   std::string ReportToH5("no");
   std::string OutputMatrices("no");
   std::string OutputMatricesHDF("no");
+  std::string OutputParamDerivHDF("no");
   std::string FreezeParameters("no");
   OhmmsAttributeSet oAttrib;
   oAttrib.add(useGPU, "gpu");
@@ -585,6 +587,7 @@ void QMCFixedSampleLinearOptimizeBatched::process(xmlNodePtr q)
 
   m_param.add(OutputMatrices, "output_matrices_csv", {"no", "yes"});
   m_param.add(OutputMatricesHDF, "output_matrices_hdf", {"no", "yes"});
+  m_param.add(OutputParamDerivHDF, "output_parameter_derivatives_hdf", {"no", "yes"});
   m_param.add(FreezeParameters, "freeze_parameters", {"no", "yes"});
 
   ev_target_ = 2.0;
@@ -604,6 +607,7 @@ void QMCFixedSampleLinearOptimizeBatched::process(xmlNodePtr q)
   app_log() << "eigenvalue target (ev_target) = " << ev_target_ << std::endl;
   do_output_matrices_csv_ = (OutputMatrices == "yes");
   do_output_matrices_hdf_ = (OutputMatricesHDF == "yes");
+  do_output_parameter_derivatives_hdf_ = (OutputParamDerivHDF == "yes");
   freeze_parameters_      = (FreezeParameters == "yes");
 
   // Use freeze_parameters with output_matrices to generate multiple lines in the output with
@@ -1626,6 +1630,14 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
   invMat = 0.0;
   Matrix<RealType> prdMat(N, N);
   prdMat = 0.0;
+
+  if (do_output_parameter_derivatives_hdf_ && is_manager()) // Only output matrix on rank 0
+  {
+    hdf_archive hout_pd;
+    std::string newh5 = get_root_name() + ".param_deriv.h5";
+    hout_pd.create(newh5, H5F_ACC_TRUNC);
+    optTarget->outputParameterDerivativesHDF(hout_pd);
+  }
 
   // build the overlap and hamiltonian matrices
   optTarget->fillOverlapHamiltonianMatrices(hamMat, ovlMat);
