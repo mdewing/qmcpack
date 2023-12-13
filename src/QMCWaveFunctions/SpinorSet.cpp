@@ -30,10 +30,10 @@ struct SpinorSet::SpinorSetMultiWalkerResource : public Resource
 SpinorSet::SpinorSet(const std::string& my_name) : SPOSet(my_name), spo_up(nullptr), spo_dn(nullptr) {}
 SpinorSet::~SpinorSet() = default;
 
-void SpinorSet::storeParamsBeforeRotation()
+void SpinorSet::storeParamsBeforeRotation(bool use_stored_copy=true)
 {
-  spo_up->storeParamsBeforeRotation();
-  spo_dn->storeParamsBeforeRotation();
+  spo_up->storeParamsBeforeRotation(use_stored_copy);
+  spo_dn->storeParamsBeforeRotation(use_stored_copy);
 }
 
 void SpinorSet::applyRotation(const ValueMatrix& rot_mat, bool use_stored_copy)

@@ -34,7 +34,7 @@ public:
   bool hasIonDerivs() const override { return spo_up->hasIonDerivs() || spo_dn->hasIonDerivs(); }
   bool isRotationSupported() const override { return spo_up->isRotationSupported() && spo_dn->isRotationSupported(); }
 
-  void storeParamsBeforeRotation() override;
+  void storeParamsBeforeRotation(bool use_stored_copy=true) override;
 
   void applyRotation(const ValueMatrix& rot_mat, bool use_stored_copy) override;
 

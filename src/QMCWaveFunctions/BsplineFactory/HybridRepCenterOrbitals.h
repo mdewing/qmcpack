@@ -401,7 +401,7 @@ public:
     APP_ABORT("AtomicOrbitals::evaluate_vgh");
   }
 
-  void storeParamsBeforeRotation()
+  void storeParamsBeforeRotation(bool use_stored_copy=true)
   {
     const auto spline_ptr     = SplineInst->getSplinePtr();
     const auto coefs_tot_size = spline_ptr->coefs_size;
@@ -543,10 +543,10 @@ private:
 public:
   HybridRepCenterOrbitals() {}
 
-  void storeParamsBeforeRotation()
+  void storeParamsBeforeRotation(bool use_stored_copy=true)
   {
     for (auto& atomic_center : AtomicCenters)
-      atomic_center.storeParamsBeforeRotation();
+      atomic_center.storeParamsBeforeRotation(use_stored_copy);
   }
 
   template<typename VM>

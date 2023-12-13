@@ -87,7 +87,7 @@ public:
   std::unique_ptr<SPOSet> makeClone() const override { return std::make_unique<SplineR2R>(*this); }
 
   /// Store an original copy of the spline coefficients for orbital rotation
-  void storeParamsBeforeRotation() override;
+  void storeParamsBeforeRotation(bool use_stored_copy=true) override;
 
   /*
      Implements orbital rotations via [1,2].

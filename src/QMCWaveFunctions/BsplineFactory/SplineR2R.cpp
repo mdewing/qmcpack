@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 // This file is distributed under the University of Illinois/NCSA Open Source License.
 // See LICENSE file in top directory for details.
 //
@@ -54,13 +54,16 @@ bool SplineR2R<ST>::write_splines(hdf_archive& h5f)
 }
 
 template<typename ST>
-void SplineR2R<ST>::storeParamsBeforeRotation()
+void SplineR2R<ST>::storeParamsBeforeRotation(bool use_stored_copy)
 {
   const auto spline_ptr     = SplineInst->getSplinePtr();
   const auto coefs_tot_size = spline_ptr->coefs_size;
-  coef_copy_                = std::make_shared<std::vector<ST>>(coefs_tot_size);
 
-  std::copy_n(spline_ptr->coefs, coefs_tot_size, coef_copy_->begin());
+  if (use_stored_copy)
+  {
+    coef_copy_ = std::make_shared<std::vector<ST>>(coefs_tot_size);
+    std::copy_n(spline_ptr->coefs, coefs_tot_size, coef_copy_->begin());
+  }
 }
 
 /*
@@ -118,21 +121,17 @@ void SplineR2R<ST>::applyRotation(const ValueMatrix& rot_mat, bool use_stored_co
 
   if (!use_stored_copy)
   {
-    assert(coef_copy_ != nullptr);
-    std::copy_n(spl_coefs, coefs_tot_size, coef_copy_->begin());
-  }
+    //assert(coef_copy_ != nullptr);
+    //std::copy_n(spl_coefs, coefs_tot_size, coef_copy_->begin());
 
+    // Hack to minimize memory usage with very large spline sets.
+    // Avoid the coefficient copy by copying it orbital by orbital
 
-  if constexpr (std::is_same_v<ST, RealType>)
-  {
-    //Here, ST should be equal to ValueType, which will be double for R2R. Using BLAS to make things faster
-    BLAS::gemm('N', 'N', OrbitalSetSize, BasisSetSize, OrbitalSetSize, ST(1.0), rot_mat.data(), OrbitalSetSize,
-               coef_copy_->data(), Nsplines, ST(0.0), spl_coefs, Nsplines);
-  }
-  else
-  {
+    std::vector<ST> tmp_orb(OrbitalSetSize);
     //Here, ST is float but ValueType is double for R2R. Due to issues with type conversions, just doing naive matrix multiplication in this case to not lose precision on rot_mat
     for (IndexType i = 0; i < BasisSetSize; i++)
+    {
+      std::copy_n(spl_coefs + i * Nsplines, OrbitalSetSize, tmp_orb.data());
       for (IndexType j = 0; j < OrbitalSetSize; j++)
       {
         const auto cur_elem = Nsplines * i + j;
@@ -140,10 +139,37 @@ void SplineR2R<ST>::applyRotation(const ValueMatrix& rot_mat, bool use_stored_co
         for (IndexType k = 0; k < OrbitalSetSize; k++)
         {
           const auto index = i * Nsplines + k;
-          newval += (*coef_copy_)[index] * rot_mat[k][j];
+          //newval += (*coef_copy_)[index] * rot_mat[k][j];
+          newval += tmp_orb[k] * rot_mat[k][j];
         }
         spl_coefs[cur_elem] = newval;
       }
+    }
+  }
+  else
+  {
+    if constexpr (std::is_same_v<ST, RealType>)
+    {
+      //Here, ST should be equal to ValueType, which will be double for R2R. Using BLAS to make things faster
+      BLAS::gemm('N', 'N', OrbitalSetSize, BasisSetSize, OrbitalSetSize, ST(1.0), rot_mat.data(), OrbitalSetSize,
+                 coef_copy_->data(), Nsplines, ST(0.0), spl_coefs, Nsplines);
+    }
+    else
+    {
+      //Here, ST is float but ValueType is double for R2R. Due to issues with type conversions, just doing naive matrix multiplication in this case to not lose precision on rot_mat
+      for (IndexType i = 0; i < BasisSetSize; i++)
+        for (IndexType j = 0; j < OrbitalSetSize; j++)
+        {
+          const auto cur_elem = Nsplines * i + j;
+          FullPrecValueType newval{0.};
+          for (IndexType k = 0; k < OrbitalSetSize; k++)
+          {
+            const auto index = i * Nsplines + k;
+            newval += (*coef_copy_)[index] * rot_mat[k][j];
+          }
+          spl_coefs[cur_elem] = newval;
+        }
+    }
   }
 }
 

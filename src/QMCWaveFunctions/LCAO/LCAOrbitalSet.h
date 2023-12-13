@@ -58,7 +58,7 @@ public:
 
   std::unique_ptr<SPOSet> makeClone() const final;
 
-  void storeParamsBeforeRotation() final { C_copy = std::make_shared<ValueMatrix>(*C); }
+  void storeParamsBeforeRotation(bool use_stored_copy=true) final { C_copy = std::make_shared<ValueMatrix>(*C); }
 
   void applyRotation(const ValueMatrix& rot_mat, bool use_stored_copy) final;
 

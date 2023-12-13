@@ -70,10 +70,10 @@ public:
   HybridRepReal(const std::string& my_name) : SPLINEBASE(my_name) {}
 
   bool isRotationSupported() const override { return SPLINEBASE::isRotationSupported(); }
-  void storeParamsBeforeRotation() override
+  void storeParamsBeforeRotation(bool use_stored_copy=true) override
   {
-    SPLINEBASE::storeParamsBeforeRotation();
-    HYBRIDBASE::storeParamsBeforeRotation();
+    SPLINEBASE::storeParamsBeforeRotation(use_stored_copy);
+    HYBRIDBASE::storeParamsBeforeRotation(use_stored_copy);
   }
   void applyRotation(const ValueMatrix& rot_mat, bool use_stored_copy) override
   {

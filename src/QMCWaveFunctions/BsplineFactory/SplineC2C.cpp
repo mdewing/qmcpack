@@ -55,7 +55,7 @@ bool SplineC2C<ST>::write_splines(hdf_archive& h5f)
 }
 
 template<typename ST>
-void SplineC2C<ST>::storeParamsBeforeRotation()
+void SplineC2C<ST>::storeParamsBeforeRotation(bool use_stored_copy=true)
 {
   const auto spline_ptr     = SplineInst->getSplinePtr();
   const auto coefs_tot_size = spline_ptr->coefs_size;

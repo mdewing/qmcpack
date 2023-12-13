@@ -312,7 +312,7 @@ TEST_CASE("Spline applyRotation one rotation", "[wavefunction]")
   rot_mat[6][4] = -5.72251258e-01;
   rot_mat[6][5] = -3.50549638e-01;
   rot_mat[6][6] = 2.49394158e-01;
-  spo->storeParamsBeforeRotation(); // avoids coefs_copy_ nullptr segfault
+  spo->storeParamsBeforeRotation(false); // avoids coefs_copy_ nullptr segfault
   spo->applyRotation(rot_mat, false);
 
   // Get the data for rotated orbitals
@@ -520,7 +520,7 @@ TEST_CASE("Spline applyRotation two rotations", "[wavefunction]")
   rot_mat1[6][4] = -5.72251258e-01;
   rot_mat1[6][5] = -3.50549638e-01;
   rot_mat1[6][6] = 2.49394158e-01;
-  spo->storeParamsBeforeRotation();    // avoids coefs_copy_ nullptr segfault
+  spo->storeParamsBeforeRotation(false);    // avoids coefs_copy_ nullptr segfault
   spo->applyRotation(rot_mat1, false); // Apply rotation 1
 
 
@@ -605,7 +605,7 @@ TEST_CASE("Spline applyRotation two rotations", "[wavefunction]")
   rot_mat2[6][4] = -2.38381031e-01;
   rot_mat2[6][5] = 5.64243083e-02;
   rot_mat2[6][6] = 3.97132056e-01;
-  spo->storeParamsBeforeRotation();    // avoids coefs_copy_ nullptr segfault
+  spo->storeParamsBeforeRotation(false);    // avoids coefs_copy_ nullptr segfault
   spo->applyRotation(rot_mat2, false); // Apply rotation2
 
   // Total rotation is product of rot_mat1 and rot_mat2
@@ -758,7 +758,7 @@ TEST_CASE("Spline applyRotation complex rotation", "[wavefunction]")
   for (int i = 0; i < orbitalsetsize; i++)
     rot_mat[i][i] = z;
 
-  spo->storeParamsBeforeRotation(); // avoids coefs_copy_ nullptr segfault
+  spo->storeParamsBeforeRotation(false); // avoids coefs_copy_ nullptr segfault
   spo->applyRotation(rot_mat, false);
 
   // Get the data for rotated orbitals

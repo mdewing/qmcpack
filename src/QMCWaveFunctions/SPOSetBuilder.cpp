@@ -148,7 +148,9 @@ std::unique_ptr<SPOSet> SPOSetBuilder::createRotatedSPOSet(xmlNodePtr cur)
     myComm->barrier_and_abort("Orbital rotation not supported with '" + sposet->getName() + "' of type '" +
                               sposet->getClassName() + "'.");
 
-  sposet->storeParamsBeforeRotation();
+
+  bool use_stored_copy = (method == "global");
+  sposet->storeParamsBeforeRotation(use_stored_copy);
   auto rot_spo = std::make_unique<RotatedSPOs>(spo_object_name, std::move(sposet));
 
   if (method == "history")

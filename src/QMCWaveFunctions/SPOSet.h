@@ -114,7 +114,7 @@ public:
   /// return true if this SPOSet can be wrappered by RotatedSPO
   virtual bool isRotationSupported() const { return false; }
   /// store parameters before getting destroyed by rotation.
-  virtual void storeParamsBeforeRotation() {}
+  virtual void storeParamsBeforeRotation(bool use_stored_copy=true) {}
   /// apply rotation to all the orbitals
   virtual void applyRotation(const ValueMatrix& rot_mat, bool use_stored_copy = false);
 
