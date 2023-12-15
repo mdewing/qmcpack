@@ -278,6 +278,12 @@ private:
   OutputMatrix output_hamiltonian_;
   OutputMatrix output_overlap_;
 
+  std::string OutputMatrices_ = std::string("no");
+  std::string OutputMatricesHDF_ = std::string("no");
+  std::string OutputParamDerivHDF_ = std::string("no");
+  std::string FreezeParameters_ = std::string("no");
+
+
   // Freeze variational parameters.  Do not update them during each step.
   bool freeze_parameters_;
 

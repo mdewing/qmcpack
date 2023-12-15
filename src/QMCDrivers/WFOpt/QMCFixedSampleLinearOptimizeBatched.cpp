@@ -576,19 +576,15 @@ void QMCFixedSampleLinearOptimizeBatched::process(xmlNodePtr q)
   std::string useGPU("yes");
   std::string vmcMove("pbyp");
   std::string ReportToH5("no");
-  std::string OutputMatrices("no");
-  std::string OutputMatricesHDF("no");
-  std::string OutputParamDerivHDF("no");
-  std::string FreezeParameters("no");
   OhmmsAttributeSet oAttrib;
   oAttrib.add(useGPU, "gpu");
   oAttrib.add(vmcMove, "move");
   oAttrib.add(ReportToH5, "hdf5");
 
-  m_param.add(OutputMatrices, "output_matrices_csv", {"no", "yes"});
-  m_param.add(OutputMatricesHDF, "output_matrices_hdf", {"no", "yes"});
-  m_param.add(OutputParamDerivHDF, "output_parameter_derivatives_hdf", {"no", "yes"});
-  m_param.add(FreezeParameters, "freeze_parameters", {"no", "yes"});
+  m_param.add(OutputMatrices_, "output_matrices_csv", {"no", "yes"});
+  m_param.add(OutputMatricesHDF_, "output_matrices_hdf", {"no", "yes"});
+  m_param.add(OutputParamDerivHDF_, "output_parameter_derivatives_hdf", {"no", "yes"});
+  m_param.add(FreezeParameters_, "freeze_parameters", {"no", "yes"});
 
   ev_target_ = 2.0;
   m_param.add(ev_target_, "ev_target");
@@ -605,10 +601,10 @@ void QMCFixedSampleLinearOptimizeBatched::process(xmlNodePtr q)
   m_param.put(q);
 
   app_log() << "eigenvalue target (ev_target) = " << ev_target_ << std::endl;
-  do_output_matrices_csv_ = (OutputMatrices == "yes");
-  do_output_matrices_hdf_ = (OutputMatricesHDF == "yes");
-  do_output_parameter_derivatives_hdf_ = (OutputParamDerivHDF == "yes");
-  freeze_parameters_      = (FreezeParameters == "yes");
+  do_output_matrices_csv_ = (OutputMatrices_ == "yes");
+  do_output_matrices_hdf_ = (OutputMatricesHDF_ == "yes");
+  do_output_parameter_derivatives_hdf_ = (OutputParamDerivHDF_ == "yes");
+  freeze_parameters_      = (FreezeParameters_ == "yes");
 
   // Use freeze_parameters with output_matrices to generate multiple lines in the output with
   // the same parameters so statistics can be computed in post-processing.
@@ -1676,6 +1672,9 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
   // compute the lowest eigenvalue of the product matrix and the corresponding eigenvector
   double ev_target  = 2.0;
   RealType lowestEV = 0.;
+  // Solve eigenvalue problem on rank 0.
+  // I don't trust the iterative versions to behave the same when solving on different ranks
+  if (is_manager())
   {
     ScopedTimer local(eigenvalue_timer_);
 #ifdef QMC_USE_MAGMA
@@ -1706,6 +1705,7 @@ bool QMCFixedSampleLinearOptimizeBatched::one_shift_run()
     }
 #endif
   }
+  myComm->bcast(parameterDirections);
 
   // compute the scaling constant to apply to the update
   objFuncWrapper_.Lambda = getNonLinearRescale(parameterDirections, ovlMat, *optTarget);
